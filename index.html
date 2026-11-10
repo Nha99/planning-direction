@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Territoire Maison Blanche 75013 - Tableau de Bord Vitrine</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+  <!-- Firebase SDKs Compat pour navigateur direct sans compilation -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <style>
     :root {
       --bg-color: #070a11;
@@ -30,7 +33,7 @@
       overflow-x: hidden;
     }
 
-    /* Écran de verrouillage total au chargement */
+    /* Écran de verrouillage général */
     #lockOverlay {
       position: fixed;
       inset: 0;
@@ -66,49 +69,51 @@
       justify-content: center;
       border: 1px solid rgba(56, 189, 248, 0.3);
     }
-    .lock-box input[type="password"] {
+    .pin-input {
       width: 100%;
       padding: 12px 14px;
       background: #1e293b;
       border: 1.5px solid rgba(255, 255, 255, 0.15);
       color: white;
       border-radius: 10px;
-      font-size: 1.1rem;
+      font-size: 1.3rem;
       text-align: center;
-      letter-spacing: 0.25em;
+      letter-spacing: 0.3em;
     }
-    .lock-box input[type="password"]:focus {
+    .pin-input:focus {
       outline: none;
       border-color: #38bdf8;
       box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
     }
 
-    /* En-tête / Navigation */
+    /* En-tête */
     header {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 12px 18px;
+      padding: 10px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       backdrop-filter: blur(12px);
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .nav-tabs { display: flex; gap: 6px; }
+    .brand { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .nav-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
     .tab-btn {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: var(--text-dim);
-      padding: 8px 14px;
+      padding: 7px 12px;
       border-radius: 10px;
       cursor: pointer;
       font-weight: 700;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
     .tab-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-color); }
     .tab-btn.active {
@@ -116,17 +121,38 @@
       color: #070a11;
       border-color: var(--accent-color);
     }
+    .tab-btn.agent {
+      border-color: rgba(168, 85, 247, 0.3);
+      color: #d8b4fe;
+    }
+    .tab-btn.agent.active {
+      background: #a855f7;
+      color: white;
+      border-color: #a855f7;
+    }
 
-    .header-right { display: flex; align-items: center; gap: 16px; }
+    .header-right { display: flex; align-items: center; gap: 14px; }
+    .sync-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
     .clock {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 1.55rem;
+      font-size: 1.45rem;
       font-weight: 800;
       color: var(--accent-color);
       text-align: right;
       letter-spacing: 0.05em;
     }
-    .date-str { font-size: 0.8rem; color: var(--text-dim); text-transform: capitalize; }
+    .date-str { font-size: 0.76rem; color: var(--text-dim); text-transform: capitalize; }
 
     /* Boutons et éléments généraux */
     button {
@@ -176,11 +202,10 @@
       gap: 6px;
     }
 
-    /* Onglets de contenu */
     .tab-content { display: none; flex-direction: column; gap: 12px; }
     .tab-content.active { display: flex; }
 
-    /* Onglet 1 : Agenda */
+    /* Agenda */
     .urgent-banner {
       background: linear-gradient(90deg, rgba(239, 68, 68, 0.18), rgba(245, 158, 11, 0.12));
       border: 1px solid rgba(239, 68, 68, 0.4);
@@ -290,7 +315,7 @@
     .day-content.empty { color: #475569; font-style: italic; }
     .actions-btn { display: flex; align-items: center; gap: 6px; }
 
-    /* Onglet 2 : Territoire Maison Blanche */
+    /* Territoire */
     .territory-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -355,7 +380,7 @@
       align-items: center;
     }
 
-    /* Onglet 3 : Mémo et Suivi */
+    /* Mémo et Suivi */
     .moodboard-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -410,7 +435,27 @@
     }
     .memo-line-text { flex: 1; cursor: pointer; }
 
-    /* Onglet 4 : Paramètres */
+    /* Espaces Personnels Agents */
+    .agent-header-box {
+      background: var(--card-bg);
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .agent-name-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #c084fc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .agent-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* Paramètres */
     .settings-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -453,7 +498,7 @@
       background: rgba(0, 0, 0, 0.8);
       align-items: center;
       justify-content: center;
-      z-index: 1000;
+      z-index: 10000;
       padding: 16px;
     }
     .modal.active { display: flex; }
@@ -463,7 +508,7 @@
       border-radius: 16px;
       padding: 20px;
       width: 100%;
-      max-width: 480px;
+      max-width: 440px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -493,7 +538,7 @@
 </head>
 <body>
 
-  <!-- ÉCRAN DE VERROUILLAGE TOTAL INITIAL (On ne voit rien tant que non déverrouillé) -->
+  <!-- ÉCRAN DE VERROUILLAGE GÉNÉRAL (7513 ou MASTER 1907) -->
   <div id="lockOverlay">
     <div class="lock-box">
       <div class="lock-icon">🔒</div>
@@ -501,23 +546,29 @@
         <div style="font-weight: 800; font-size: 1.15rem; color: #f8fafc; letter-spacing: 0.05em;">ACCÈS RESTREINT</div>
         <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Territoire Maison Blanche 75013</div>
       </div>
-      <input type="password" id="gatePassInput" placeholder="••••" maxlength="10" onkeypress="if(event.key === 'Enter') checkGateAuth()">
-      <button onclick="checkGateAuth()" class="primary" style="width: 100%; padding: 10px; font-size: 0.9rem;">Déverrouiller l'écran</button>
-      <div id="gateErrorMsg" style="font-size: 0.78rem; color: #f87171; display: none;">Mot de passe incorrect</div>
+      <input type="password" id="gatePassInput" class="pin-input" placeholder="••••" maxlength="4" onkeypress="if(event.key === 'Enter') checkGateAuth()">
+      <button onclick="checkGateAuth()" class="primary" style="width: 100%; padding: 12px; font-size: 0.9rem;">Déverrouiller l'écran</button>
+      <div id="gateErrorMsg" style="font-size: 0.78rem; color: #f87171; display: none;">Code PIN incorrect</div>
     </div>
   </div>
 
-  <!-- Application Principale (Masquée au départ) -->
+  <!-- NAVIGATION HEADER -->
   <header>
     <div class="brand">
       <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('agenda')">📅 Agenda</button>
-        <button class="tab-btn" onclick="switchTab('territoire')">📍 Territoire (Équipements)</button>
+        <button class="tab-btn" onclick="switchTab('territoire')">📍 Territoire</button>
         <button class="tab-btn" onclick="switchTab('moodboard')">📋 Mémo et Suivi</button>
-        <button class="tab-btn" onclick="switchTab('parametres')">⚙️ Paramètres & Couleurs</button>
+        <!-- Onglets dédiés à chaque agent -->
+        <button class="tab-btn agent" onclick="tryOpenAgentTab('lora')">👤 Lora</button>
+        <button class="tab-btn agent" onclick="tryOpenAgentTab('stephane')">👤 Stéphane</button>
+        <button class="tab-btn agent" onclick="tryOpenAgentTab('malik')">👤 Malik</button>
+        <button class="tab-btn agent" onclick="tryOpenAgentTab('anas')">👤 Anas</button>
+        <button class="tab-btn" onclick="switchTab('parametres')">⚙️ Paramètres</button>
       </div>
     </div>
     <div class="header-right">
+      <div id="syncBadge" class="sync-status">● Synchronisé Cloud</div>
       <div>
         <div class="clock" id="liveClock">--:--:--</div>
         <div class="date-str" id="liveDate">Chargement...</div>
@@ -528,7 +579,6 @@
 
   <!-- ================= ONGLET 1 : AGENDA ================= -->
   <div id="tab-agenda" class="tab-content active">
-    <!-- Rappels importants -->
     <div class="urgent-banner">
       <div class="urgent-header">
         <div class="urgent-title">⚠️ RAPPELS IMPORTANTS & ÉCHÉANCES</div>
@@ -537,7 +587,6 @@
       <div class="urgent-items" id="urgentList"></div>
     </div>
 
-    <!-- Prêts & RH -->
     <div class="grid-top">
       <div class="card">
         <div class="card-header">
@@ -556,7 +605,6 @@
       </div>
     </div>
 
-    <!-- Calendrier perpétuel 35 jours -->
     <div class="agenda-resizable-box" id="agendaBox">
       <div class="card-header">
         <div class="card-title">📅 Agenda Prévisionnel (35 jours glissants)</div>
@@ -565,7 +613,6 @@
       <div class="agenda-scroll-container" id="agendaScroll"></div>
     </div>
 
-    <!-- Commandes -->
     <div class="card">
       <div class="card-header">
         <div class="card-title">📦 Commandes & Devis</div>
@@ -597,7 +644,20 @@
     <div class="moodboard-grid" id="moodboardContainer"></div>
   </div>
 
-  <!-- ================= ONGLET 4 : PARAMÈTRES (SANS SÉCURITÉ) ================= -->
+  <!-- ================= ONGLETS AGENTS : LORA, STÉPHANE, MALIK, ANAS ================= -->
+  <!-- Template réutilisé dynamiquement pour chaque agent -->
+  <div id="tab-agent" class="tab-content">
+    <div class="agent-header-box">
+      <div class="agent-name-title" id="currentAgentTitle">👤 Espace Agent</div>
+      <div class="agent-actions">
+        <button onclick="openChangePinModal()" style="font-size:0.75rem;">🔑 Changer mon code PIN (4 chiffres)</button>
+        <button onclick="addNewAgentMemoCard()" class="primary" style="font-size:0.75rem;">+ Ajouter un bloc mémo</button>
+      </div>
+    </div>
+    <div class="moodboard-grid" id="agentMemosContainer"></div>
+  </div>
+
+  <!-- ================= ONGLET PARAMÈTRES ================= -->
   <div id="tab-parametres" class="tab-content">
     <div class="card">
       <div class="card-header">
@@ -658,16 +718,16 @@
     </div>
   </div>
 
-  <!-- Barre d'administration basse -->
+  <!-- Barre basse -->
   <div class="admin-bar">
     <div style="font-size: 0.75rem; color: #94a3b8;">
-      Samsung QM43R • Territoire Maison Blanche 75013
+      Samsung QM43R • Territoire Maison Blanche 75013 • Firebase Realtime DB
     </div>
     <div style="display: flex; gap: 8px;">
       <button onclick="exportData()">💾 Exporter JSON</button>
       <button onclick="document.getElementById('importFile').click()">📂 Importer JSON</button>
       <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-      <button onclick="forceResetCalendar()" style="background: #334155; font-size: 0.7rem;">↺ Réinitialiser tout</button>
+      <button onclick="forceResetCalendar()" style="background: #334155; font-size: 0.7rem;">↺ Réinitialiser</button>
     </div>
   </div>
 
@@ -687,11 +747,61 @@
     </div>
   </div>
 
-  <script>
-    // Empreinte SHA-256 de vérification (Le mot de passe n'apparaît JAMAIS en clair dans le code F12)
-    var HASH_TARGET = "da9d2b79c84bc1e8e257dcea2dfc4297e7bd0edf903f268fc5d4846ea1dd45dd";
+  <!-- Modal Mot de Passe Espace Agent -->
+  <div class="modal" id="agentAuthModal">
+    <div class="modal-card" style="max-width: 360px;">
+      <h3 id="agentAuthTitle">🔐 Espace Agent</h3>
+      <p style="font-size: 0.8rem; color: #94a3b8;">Entrez votre code personnel à 4 chiffres (ou Master) :</p>
+      <input type="password" id="agentPinInput" class="pin-input" placeholder="••••" maxlength="4" onkeypress="if(event.key === 'Enter') validateAgentPin()">
+      <div id="agentAuthError" style="font-size:0.75rem; color:#f87171; display:none;">Code PIN incorrect</div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+        <button onclick="closeAgentAuthModal()">Annuler</button>
+        <button onclick="validateAgentPin()" class="primary">Accéder</button>
+      </div>
+    </div>
+  </div>
 
-    // Algorithme SHA-256 en JS pur 100% compatible Tizen & hors ligne
+  <!-- Modal Changement de Code PIN Agent (4 chiffres) -->
+  <div class="modal" id="changePinModal">
+    <div class="modal-card" style="max-width: 360px;">
+      <h3 id="changePinTitle">🔑 Changer mon code PIN</h3>
+      <p style="font-size: 0.8rem; color: #94a3b8;">Saisissez votre nouveau code à 4 chiffres :</p>
+      <input type="password" id="newPinInput1" class="pin-input" placeholder="••••" maxlength="4">
+      <input type="password" id="newPinInput2" class="pin-input" placeholder="Confirmer ••••" maxlength="4" style="margin-top:6px;">
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+        <button onclick="closeChangePinModal()">Annuler</button>
+        <button onclick="saveNewAgentPin()" class="primary">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration Firebase officielle
+    var firebaseConfig = {
+      apiKey: "AIzaSyC916b_mPJ76e2UaS4EMNLudoDGmi6Btnw",
+      authDomain: "agenda-maison-blanche.firebaseapp.com",
+      databaseURL: "https://agenda-maison-blanche-default-rtdb.firebaseio.com",
+      projectId: "agenda-maison-blanche",
+      storageBucket: "agenda-maison-blanche.firebasestorage.app",
+      messagingSenderId: "827624883561",
+      appId: "1:827624883561:web:2424feffcb2b48fc27e9f8"
+    };
+
+    // Initialisation Firebase & Realtime DB
+    var db = null;
+    var cloudRef = null;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      cloudRef = db.ref('territoire_maison_blanche_data');
+    } catch(e) {
+      console.warn("Connexion Firebase locale/hors ligne", e);
+    }
+
+    // HASHES DE SÉCURITÉ SHA-256 (Le mot de passe n'apparaît JAMAIS en clair)
+    var HASH_GATE = "da9d2b79c84bc1e8e257dcea2dfc4297e7bd0edf903f268fc5d4846ea1dd45dd"; // PIN 7513
+    var HASH_MASTER = "4332cd76590d0efdbd8d067acf531546da2ba0a67c538440e7defedbea48d1dc"; // MASTER PIN 1907 (ouvre TOUT)
+
     function sha256Pure(ascii) {
       function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
       var mathPow = Math.pow;
@@ -747,10 +857,11 @@
       return result;
     }
 
+    // Gestion Verrouillage Général (7513 ou Master 1907)
     function checkGateAuth() {
-      var val = document.getElementById('gatePassInput').value;
-      var hashed = sha256Pure(val);
-      if (hashed === HASH_TARGET) {
+      var val = document.getElementById('gatePassInput').value.trim();
+      var h = sha256Pure(val);
+      if (h === HASH_GATE || h === HASH_MASTER) {
         document.getElementById('lockOverlay').style.display = 'none';
         sessionStorage.setItem('tizen_gate_open', '1');
       } else {
@@ -769,35 +880,57 @@
       document.getElementById('gatePassInput').focus();
     }
 
-    // Auto-déverrouillage uniquement pendant la session active si déjà validé
     if (sessionStorage.getItem('tizen_gate_open') === '1') {
       document.getElementById('lockOverlay').style.display = 'none';
     } else {
       document.getElementById('lockOverlay').style.display = 'flex';
     }
 
-    // Polyfills Tizen
-    function pad2(n) { return (n < 10 ? '0' : '') + n; }
-    function formatDateKey(date) {
-      return date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate());
-    }
+    // Données par défaut pour les 4 agents (Lora, Stéphane, Malik, Anas)
+    var defaultAgents = {
+      lora: {
+        name: "Lora",
+        pinHash: sha256Pure("1234"), // PIN initial par défaut : 1234
+        memos: [
+          { id: 1, title: "A FAIRE / SUIVIS", colorClass: "green", lines: [{ text: "TRM 25/11", done: false }, { text: "Formation 17/11 13h", done: false }] },
+          { id: 2, title: "CONGÉS & RÉCUPÉRATIONS", colorClass: "pink", lines: [{ text: "Congés : 8/10, 13/10 RC, 23/10 RC", done: false }] }
+        ]
+      },
+      stephane: {
+        name: "Stéphane",
+        pinHash: sha256Pure("1234"),
+        memos: [
+          { id: 1, title: "CONGÉS & PLANNING", colorClass: "amber", lines: [{ text: "Congés 25/10 au 1/11", done: false }] },
+          { id: 2, title: "INTERVENTIONS TECHNIQUES", colorClass: "", lines: [{ text: "Suivi chaufferie et compteurs", done: false }] }
+        ]
+      },
+      malik: {
+        name: "Malik",
+        pinHash: sha256Pure("1234"),
+        memos: [
+          { id: 1, title: "PLANNING & SUIVI DE SITE", colorClass: "green", lines: [{ text: "Permanence week-end", done: false }] },
+          { id: 2, title: "ÉQUIPEMENTS & MATÉRIEL", colorClass: "", lines: [{ text: "Vérification des lignes d'eau", done: false }] }
+        ]
+      },
+      anas: {
+        name: "Anas",
+        pinHash: sha256Pure("1234"),
+        memos: [
+          { id: 1, title: "CONGÉS & RÉCUPÉRATIONS", colorClass: "pink", lines: [{ text: "Congé 29/10 RC", done: false }] },
+          { id: 2, title: "EXPLOITATION & TÂCHES", colorClass: "green", lines: [{ text: "Point technique gymnase", done: false }] }
+        ]
+      }
+    };
 
-    var dayLabels = ["Di", "L", "Ma", "Me", "J", "V", "S"];
-
-    // Données des équipements avec numéros de téléphone officiels
     var defaultVenues = [
       {
         id: "caillaux",
         name: "Gymnase Caillaux",
         address: "3 rue Caillaux, 75013 Paris",
         phone: "01 45 85 41 82",
-        metro: "Maison Blanche (Ligne 7 / 14)",
+        metro: "Maison Blanche (L7 / L14)",
         type: "Salle multisports • Escrime • Sports collectifs",
-        events: [
-          "Fermeture Caillaux du 20/12 au 3/01",
-          "Consigne SST : 2e 5h Chaufferie Caillaux",
-          "19/11 11h Encombrants Caillaux"
-        ]
+        events: ["Fermeture Caillaux du 20/12 au 3/01", "Consigne SST : 2e 5h Chaufferie Caillaux", "19/11 11h Encombrants Caillaux"]
       },
       {
         id: "bourneville",
@@ -806,10 +939,7 @@
         phone: "01 45 80 50 14",
         metro: "Porte d'Italie (L7 / T3a)",
         type: "Gymnase omnisports • Plateau d'évolution",
-        events: [
-          "Travaux Bourneville du 21/12 au 3/01",
-          "Bédacier + 1h HS (Bourneville)"
-        ]
+        events: ["Travaux Bourneville du 21/12 au 3/01", "Bédacier + 1h HS (Bourneville)"]
       },
       {
         id: "poterne",
@@ -818,10 +948,7 @@
         phone: "01 45 88 56 62",
         metro: "Poterne des Peupliers (T3a)",
         type: "Terrain de grand jeu (football) • Aires de cross • Piste",
-        events: [
-          "9/11 SAVPRO Poterne / Caillaux",
-          "Contrôle éclairage nocturne terrain"
-        ]
+        events: ["9/11 SAVPRO Poterne / Caillaux", "Contrôle éclairage nocturne terrain"]
       },
       {
         id: "kellermann",
@@ -830,10 +957,7 @@
         phone: "01 45 80 20 88",
         metro: "Porte d'Italie / Porte de Choisy",
         type: "Salle polyvalente • Sports universitaires & scolaires",
-        events: [
-          "SST Kellermann 4e 5h",
-          "Chaufferie Kellermann (Point DALKIA)"
-        ]
+        events: ["SST Kellermann 4e 5h", "Chaufferie Kellermann (Point DALKIA)"]
       },
       {
         id: "ferrandi",
@@ -842,10 +966,7 @@
         phone: "01 45 83 31 16",
         metro: "Tolbiac / Maison Blanche",
         type: "Terrain d'éducation physique • Piste d'athlétisme",
-        events: [
-          "20/11 14h Visite TEP Ferrandi (Dialogue de gestion)",
-          "Nettoyage et évacuation encombrants"
-        ]
+        events: ["20/11 14h Visite TEP Ferrandi (Dialogue de gestion)", "Nettoyage et évacuation encombrants"]
       },
       {
         id: "trenet",
@@ -854,14 +975,10 @@
         phone: "01 45 88 56 62",
         metro: "Cité Universitaire / Poterne des Peupliers",
         type: "City stade Petite Ceinture • Football à 5 • Basket",
-        events: [
-          "Vérification filet pare-ballons et clôture",
-          "Passage régulier régie propreté"
-        ]
+        events: ["Vérification filet pare-ballons et clôture", "Passage régulier régie propreté"]
       }
     ];
 
-    // Données Mémo et Suivi
     var defaultMemos = [
       {
         id: 1,
@@ -987,6 +1104,7 @@
       events: defaultEvents,
       venues: defaultVenues,
       memos: defaultMemos,
+      agents: defaultAgents,
       theme: {
         bg: "#070a11",
         text: "#f8fafc",
@@ -998,29 +1116,63 @@
     };
 
     var appData = defaultData;
+
+    // Charger données locales d'abord
     try {
-      var stored = localStorage.getItem('agenda_vitrine_v7');
+      var stored = localStorage.getItem('mb_live_data');
       if (stored) {
         var parsed = JSON.parse(stored);
         if (parsed) {
           appData = parsed;
-          if (!appData.events) appData.events = defaultEvents;
-          if (!appData.venues) appData.venues = defaultVenues;
-          if (!appData.memos) appData.memos = defaultMemos;
-          if (!appData.theme) appData.theme = defaultData.theme;
+          if (!appData.agents) appData.agents = defaultAgents;
         }
       }
-    } catch(e) { appData = defaultData; }
+    } catch(e) {}
+
+    // SYNCHRONISATION EN TEMPS RÉEL VIA FIREBASE
+    if (cloudRef) {
+      cloudRef.on('value', function(snapshot) {
+        var val = snapshot.val();
+        if (val) {
+          appData = val;
+          if (!appData.agents) appData.agents = defaultAgents;
+          try { localStorage.setItem('mb_live_data', JSON.stringify(appData)); } catch(e){}
+          applyTheme();
+          renderAll();
+          document.getElementById('syncBadge').innerText = "● Connecté En Direct";
+          document.getElementById('syncBadge').style.color = "#34d399";
+        } else {
+          // Première initialisation de la base distante
+          cloudRef.set(appData);
+        }
+      }, function(err) {
+        console.warn("Erreur écoute Firebase:", err);
+        document.getElementById('syncBadge').innerText = "● Mode Local";
+        document.getElementById('syncBadge').style.color = "#f59e0b";
+      });
+    }
 
     function syncSave() {
-      try { localStorage.setItem('agenda_vitrine_v7', JSON.stringify(appData)); } catch(e) {}
+      try { localStorage.setItem('mb_live_data', JSON.stringify(appData)); } catch(e) {}
+      if (cloudRef) {
+        cloudRef.set(appData);
+      }
       applyTheme();
       renderAll();
     }
 
-    // Onglets
+    // Polyfills Tizen
+    function pad2(n) { return (n < 10 ? '0' : '') + n; }
+    function formatDateKey(date) {
+      return date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate());
+    }
+    var dayLabels = ["Di", "L", "Ma", "Me", "J", "V", "S"];
+
+    // Navigation des onglets
+    var activeAgentKey = null;
+
     function switchTab(tabName) {
-      var tabs = ['agenda', 'territoire', 'moodboard', 'parametres'];
+      var tabs = ['agenda', 'territoire', 'moodboard', 'agent', 'parametres'];
       for (var i = 0; i < tabs.length; i++) {
         var t = tabs[i];
         var content = document.getElementById('tab-' + t);
@@ -1031,10 +1183,199 @@
 
       var btns = document.querySelectorAll('.tab-btn');
       btns.forEach(function(b) { b.classList.remove('active'); });
-      event.currentTarget.classList.add('active');
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      }
     }
 
-    // Couleurs & Thème
+    // Gestion Sécurité Espaces Agents
+    var pendingAgentToOpen = null;
+    var unlockedAgents = {}; // Mémorise les agents déverrouillés pendant la session
+
+    function tryOpenAgentTab(agentKey) {
+      if (unlockedAgents[agentKey]) {
+        openAgentDirect(agentKey);
+      } else {
+        pendingAgentToOpen = agentKey;
+        var ag = (appData.agents && appData.agents[agentKey]) || defaultAgents[agentKey];
+        document.getElementById('agentAuthTitle').innerText = "🔐 Espace " + ag.name;
+        document.getElementById('agentPinInput').value = '';
+        document.getElementById('agentAuthError').style.display = 'none';
+        document.getElementById('agentAuthModal').classList.add('active');
+        document.getElementById('agentPinInput').focus();
+      }
+    }
+
+    function closeAgentAuthModal() {
+      document.getElementById('agentAuthModal').classList.remove('active');
+      pendingAgentToOpen = null;
+    }
+
+    function validateAgentPin() {
+      var input = document.getElementById('agentPinInput').value.trim();
+      var h = sha256Pure(input);
+      var ag = (appData.agents && appData.agents[pendingAgentToOpen]) || defaultAgents[pendingAgentToOpen];
+
+      // Ouvre si le code agent correspond OU si le MASTER PIN 1907 est saisi
+      if (h === ag.pinHash || h === HASH_MASTER) {
+        unlockedAgents[pendingAgentToOpen] = true;
+        closeAgentAuthModal();
+        openAgentDirect(pendingAgentToOpen);
+      } else {
+        document.getElementById('agentAuthError').style.display = 'block';
+        document.getElementById('agentPinInput').value = '';
+        document.getElementById('agentPinInput').focus();
+      }
+    }
+
+    function openAgentDirect(agentKey) {
+      activeAgentKey = agentKey;
+      var ag = (appData.agents && appData.agents[agentKey]) || defaultAgents[agentKey];
+      document.getElementById('currentAgentTitle').innerHTML = "👤 Espace Personnel : <strong>" + ag.name + "</strong>";
+      renderAgentMemos();
+      switchTab('agent');
+    }
+
+    // Modal Changement de PIN Agent
+    function openChangePinModal() {
+      if (!activeAgentKey) return;
+      var ag = appData.agents[activeAgentKey];
+      document.getElementById('changePinTitle').innerText = "🔑 Modifier le code PIN de " + ag.name;
+      document.getElementById('newPinInput1').value = '';
+      document.getElementById('newPinInput2').value = '';
+      document.getElementById('changePinModal').classList.add('active');
+      document.getElementById('newPinInput1').focus();
+    }
+
+    function closeChangePinModal() {
+      document.getElementById('changePinModal').classList.remove('active');
+    }
+
+    function saveNewAgentPin() {
+      var p1 = document.getElementById('newPinInput1').value.trim();
+      var p2 = document.getElementById('newPinInput2').value.trim();
+
+      if (!/^[0-9]{4}$/.test(p1)) {
+        return alert("Le code doit comporter exactement 4 chiffres numériques.");
+      }
+      if (p1 !== p2) {
+        return alert("Les deux codes saisis ne correspondent pas.");
+      }
+
+      appData.agents[activeAgentKey].pinHash = sha256Pure(p1);
+      syncSave();
+      closeChangePinModal();
+      alert("Nouveau code PIN enregistré et synchronisé !");
+    }
+
+    // Rendu des Mémos de l'agent actif
+    function renderAgentMemos() {
+      var cont = document.getElementById('agentMemosContainer');
+      if (!cont || !activeAgentKey) return;
+      var ag = (appData.agents && appData.agents[activeAgentKey]) || defaultAgents[activeAgentKey];
+      var memos = ag.memos || [];
+      var html = '';
+
+      for (var i = 0; i < memos.length; i++) {
+        var m = memos[i];
+        html += '<div class="memo-card">';
+        html += '<div class="memo-title-box" onclick="editAgentMemoTitle(' + m.id + ')">';
+        html += '<div class="memo-title ' + (m.colorClass || '') + '">' + m.title + '</div>';
+        html += '<span style="font-size:0.75rem; color:#64748b;">✎ Titre</span>';
+        html += '</div>';
+
+        html += '<div class="memo-lines">';
+        var lines = m.lines || [];
+        for (var j = 0; j < lines.length; j++) {
+          var ln = lines[j];
+          html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
+          html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleAgentMemoLine(' + m.id + ', ' + j + ')" style="cursor:pointer;">';
+          html += '<span class="memo-line-text" onclick="editAgentMemoLineText(' + m.id + ', ' + j + ')">' + ln.text + '</span>';
+          html += '<button onclick="deleteAgentMemoLine(' + m.id + ', ' + j + ')" class="danger" style="padding:1px 5px; font-size:0.65rem;">✕</button>';
+          html += '</div>';
+        }
+        html += '</div>';
+
+        html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">';
+        html += '<button onclick="addAgentMemoLine(' + m.id + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
+        html += '<button onclick="deleteAgentMemoCard(' + m.id + ')" class="danger" style="padding:3px 6px; font-size:0.7rem;">Supprimer bloc</button>';
+        html += '</div>';
+
+        html += '</div>';
+      }
+      cont.innerHTML = html;
+    }
+
+    function addNewAgentMemoCard() {
+      if (!activeAgentKey) return;
+      var title = prompt("Titre du nouveau bloc :");
+      if (!title) return;
+      if (!appData.agents[activeAgentKey].memos) appData.agents[activeAgentKey].memos = [];
+      appData.agents[activeAgentKey].memos.push({
+        id: Date.now(),
+        title: title,
+        colorClass: "green",
+        lines: []
+      });
+      syncSave();
+    }
+
+    function deleteAgentMemoCard(memoId) {
+      if (!activeAgentKey) return;
+      if (confirm("Supprimer ce bloc ?")) {
+        appData.agents[activeAgentKey].memos = appData.agents[activeAgentKey].memos.filter(function(m){ return m.id !== memoId; });
+        syncSave();
+      }
+    }
+
+    function editAgentMemoTitle(memoId) {
+      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
+      var t = prompt("Modifier le titre :", m.title);
+      if (t) {
+        m.title = t;
+        syncSave();
+      }
+    }
+
+    function addAgentMemoLine(memoId) {
+      document.getElementById('entryType').value = 'agent_memo_line';
+      document.getElementById('entryKey').value = memoId;
+      document.getElementById('entrySubKey').value = '-1';
+      document.getElementById('modalTitle').innerText = "Ajouter une ligne";
+      document.getElementById('modalInput1').value = '';
+      document.getElementById('modalInput1').placeholder = "Tâche, suivi, note...";
+      document.getElementById('modalInput2').style.display = 'none';
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function editAgentMemoLineText(memoId, lineIdx) {
+      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
+      document.getElementById('entryType').value = 'agent_memo_line';
+      document.getElementById('entryKey').value = memoId;
+      document.getElementById('entrySubKey').value = lineIdx;
+      document.getElementById('modalTitle').innerText = "Modifier la ligne";
+      document.getElementById('modalInput1').value = m.lines[lineIdx].text;
+      document.getElementById('modalInput2').style.display = 'none';
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function toggleAgentMemoLine(memoId, lineIdx) {
+      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
+      if (m && m.lines[lineIdx]) {
+        m.lines[lineIdx].done = !m.lines[lineIdx].done;
+        syncSave();
+      }
+    }
+
+    function deleteAgentMemoLine(memoId, lineIdx) {
+      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
+      if (m) {
+        m.lines.splice(lineIdx, 1);
+        syncSave();
+      }
+    }
+
+    // Thème et Couleurs
     function applyTheme() {
       var t = appData.theme || defaultData.theme;
       var root = document.documentElement;
@@ -1045,17 +1386,20 @@
       root.style.setProperty('--holiday-color', t.holiday);
       root.style.setProperty('--font-family', t.font);
 
-      document.getElementById('pickerBg').value = t.bg;
-      document.getElementById('pickerBgVal').innerText = t.bg;
-      document.getElementById('pickerText').value = t.text;
-      document.getElementById('pickerTextVal').innerText = t.text;
-      document.getElementById('pickerAccent').value = t.accent;
-      document.getElementById('pickerAccentVal').innerText = t.accent;
-      document.getElementById('pickerHighlight').value = t.highlight;
-      document.getElementById('pickerHighlightVal').innerText = t.highlight;
-      document.getElementById('pickerHoliday').value = t.holiday;
-      document.getElementById('pickerHolidayVal').innerText = t.holiday;
-      document.getElementById('fontSelect').value = t.font;
+      var pBg = document.getElementById('pickerBg');
+      if (pBg) {
+        pBg.value = t.bg;
+        document.getElementById('pickerBgVal').innerText = t.bg;
+        document.getElementById('pickerText').value = t.text;
+        document.getElementById('pickerTextVal').innerText = t.text;
+        document.getElementById('pickerAccent').value = t.accent;
+        document.getElementById('pickerAccentVal').innerText = t.accent;
+        document.getElementById('pickerHighlight').value = t.highlight;
+        document.getElementById('pickerHighlightVal').innerText = t.highlight;
+        document.getElementById('pickerHoliday').value = t.holiday;
+        document.getElementById('pickerHolidayVal').innerText = t.holiday;
+        document.getElementById('fontSelect').value = t.font;
+      }
     }
 
     function updateTheme() {
@@ -1114,10 +1458,10 @@
       renderAgenda();
       renderTerritory();
       renderMoodboard();
+      if (activeAgentKey) renderAgentMemos();
     }
 
     function renderAgenda() {
-      // Rappels
       var urgentEl = document.getElementById('urgentList');
       if (urgentEl) {
         var uHtml = '';
@@ -1128,7 +1472,6 @@
         urgentEl.innerHTML = uHtml;
       }
 
-      // Prêts
       var pretsEl = document.getElementById('pretsList');
       if (pretsEl) {
         var pHtml = '';
@@ -1140,7 +1483,6 @@
         pretsEl.innerHTML = pHtml;
       }
 
-      // RH
       var rhEl = document.getElementById('rhList');
       if (rhEl) {
         var rHtml = '';
@@ -1152,7 +1494,6 @@
         rhEl.innerHTML = rHtml;
       }
 
-      // Commandes
       var cmdEl = document.getElementById('commandesList');
       var total = 0;
       if (cmdEl) {
@@ -1168,7 +1509,6 @@
       var totalEl = document.getElementById('totalCommandes');
       if (totalEl) totalEl.innerText = 'Total : ' + total.toLocaleString('fr-FR') + ' €';
 
-      // Calendrier 35 jours
       var agendaEl = document.getElementById('agendaScroll');
       if (agendaEl) {
         var now = new Date();
@@ -1535,6 +1875,13 @@
           if (subKey === '-1') memo.lines.push({ text: v1, done: false });
           else memo.lines[parseInt(subKey)].text = v1;
         }
+      } else if (type === 'agent_memo_line') {
+        if (!v1) return alert("Texte obligatoire");
+        var agMemo = appData.agents[activeAgentKey].memos.find(function(x) { return x.id === parseInt(keyOrId); });
+        if (agMemo) {
+          if (subKey === '-1') agMemo.lines.push({ text: v1, done: false });
+          else agMemo.lines[parseInt(subKey)].text = v1;
+        }
       }
 
       syncSave();
@@ -1554,7 +1901,7 @@
       var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
       var dl = document.createElement('a');
       dl.setAttribute("href", dataStr);
-      dl.setAttribute("download", "agenda_maison_blanche.json");
+      dl.setAttribute("download", "agenda_direction_sync.json");
       dl.click();
     }
 
@@ -1574,7 +1921,7 @@
 
     function forceResetCalendar() {
       if (confirm("Réinitialiser toutes les données par défaut ?")) {
-        try { localStorage.removeItem('agenda_vitrine_v7'); } catch(e) {}
+        try { localStorage.removeItem('mb_live_data'); } catch(e) {}
         appData = defaultData;
         syncSave();
       }
