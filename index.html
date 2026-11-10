@@ -57,7 +57,7 @@
     }
     .date-str { font-size: 0.82rem; color: var(--text-dim); text-transform: capitalize; }
 
-    /* Rappels importants modifiables */
+    /* Rappels importants */
     .urgent-banner {
       background: linear-gradient(90deg, rgba(239, 68, 68, 0.18), rgba(245, 158, 11, 0.12));
       border: 1px solid rgba(239, 68, 68, 0.4);
@@ -144,7 +144,7 @@
     .item-row.alert { border-left-color: var(--alert); }
     .item-row.warn { border-left-color: var(--warning); }
 
-    /* Zone Agenda Redimensionnable */
+    /* Zone Agenda Redimensionnable & Déroulante */
     .agenda-resizable-box {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -155,13 +155,14 @@
       gap: 10px;
       resize: vertical;
       overflow: hidden;
-      min-height: 320px;
+      min-height: 380px;
       height: 520px;
       max-height: 85vh;
       position: relative;
     }
     .agenda-scroll-container {
       flex: 1;
+      min-height: 280px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -347,10 +348,10 @@
     </div>
   </div>
 
-  <!-- ZONE AGENDA DYNAMIQUE REDIMENSIONNABLE -->
+  <!-- ZONE AGENDA DYNAMIQUE -->
   <div class="agenda-resizable-box" id="agendaBox">
     <div class="card-header">
-      <div class="card-title">📅 Agenda Prévisionnel (35 jours)</div>
+      <div class="card-title">📅 Agenda Prévisionnel (35 jours glissants)</div>
       <div style="font-size: 0.75rem; color: #94a3b8;">Clique sur un jour pour ajouter ou modifier</div>
     </div>
     
@@ -372,10 +373,9 @@
   <!-- Barre administration basse -->
   <div class="admin-bar">
     <div style="font-size: 0.75rem; color: #94a3b8;">
-      Samsung QM43R • Agenda Perpétuel
+      Samsung QM43R • Agenda Opérationnel
     </div>
     <div style="display: flex; gap: 8px;">
-      <button onclick="openConfigFirebase()">⚙️ Config Synchro Partagée</button>
       <button onclick="exportData()">💾 Exporter JSON</button>
       <button onclick="document.getElementById('importFile').click()">📂 Importer JSON</button>
       <input type="file" id="importFile" style="display:none" onchange="importData(event)">
@@ -398,27 +398,9 @@
     </div>
   </div>
 
-  <!-- Modal Synchro Cloud Firebase -->
-  <div class="modal" id="firebaseModal">
-    <div class="modal-card">
-      <h3>Synchronisation avec ta Cheffe (Gratuit)</h3>
-      <p style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4;">
-        Pour que les modifications faites depuis un téléphone ou un autre PC s'affichent instantanément sur l'écran vitrine, colle ici le JSON de configuration Firebase Realtime Database.
-      </p>
-      <textarea id="firebaseConfigJson" rows="6" placeholder='Colle ici le JSON firebaseConfig...'></textarea>
-      <div style="display: flex; justify-content: space-between; align-items:center; margin-top: 8px;">
-        <button onclick="disableCloud()" class="danger">Désactiver Cloud</button>
-        <div style="display:flex; gap:8px;">
-          <button onclick="closeFirebaseModal()">Fermer</button>
-          <button onclick="saveFirebaseConfig()" class="primary">Activer Synchro</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // Événements initiaux indexés par clé ISO YYYY-MM-DD
-    const defaultEvents = {
+    // Événements du tableau blanc indexés par YYYY-MM-DD
+    var defaultEvents = {
       "2026-11-09": "SAVPRO BAC / Poterne / Caillaux",
       "2026-11-10": "11h30 Seb. Donadien",
       "2026-11-11": "Armistice (Férié)",
@@ -441,46 +423,7 @@
       "2026-12-04": "Audit sécurité installations"
     };
 
-    // Calcul garanti des jours fériés français
-    function getFrenchHoliday(date) {
-      try {
-        const d = date.getDate();
-        const m = date.getMonth() + 1;
-        const y = date.getFullYear();
-
-        if (d === 1 && m === 1) return "Jour de l'An";
-        if (d === 1 && m === 5) return "Fête du Travail";
-        if (d === 8 && m === 5) return "Victoire 1945";
-        if (d === 14 && m === 7) return "Fête Nationale";
-        if (d === 15 && m === 8) return "Assomption";
-        if (d === 1 && m === 11) return "Toussaint";
-        if (d === 11 && m === 11) return "Armistice 1918";
-        if (d === 25 && m === 12) return "Noël";
-
-        // Algorithme de Butcher pour Pâques
-        const a = y % 19, b = Math.floor(y / 100), c = y % 100;
-        const dd = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
-        const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - dd - g + 15) % 30;
-        const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
-        const mm = Math.floor((a + 11 * h + 22 * l) / 451);
-        const em = Math.floor((h + l - 7 * mm + 114) / 31);
-        const ed = ((h + l - 7 * mm + 114) % 31) + 1;
-        const easter = new Date(y, em - 1, ed);
-
-        const lPaques = new Date(easter); lPaques.setDate(easter.getDate() + 1);
-        const asc = new Date(easter); asc.setDate(easter.getDate() + 39);
-        const lPent = new Date(easter); lPent.setDate(easter.getDate() + 50);
-
-        if (lPaques.getDate() === d && (lPaques.getMonth() + 1) === m) return "Lundi de Pâques";
-        if (asc.getDate() === d && (asc.getMonth() + 1) === m) return "Ascension";
-        if (lPent.getDate() === d && (lPent.getMonth() + 1) === m) return "Lundi de Pentecôte";
-      } catch(err) {
-        // En cas d'erreur de date, ne bloque pas le calendrier
-      }
-      return null;
-    }
-
-    const defaultData = {
+    var defaultData = {
       urgents: [
         "Rendre 6 BRDT avant le 15/01 (Période chargée 28/12 au 15/01 + Télécommandes)",
         "Fermetures : Caillaux fermé (20/12 → 3/01) | Travaux Bourneville (21/12 → 3/01)",
@@ -511,173 +454,170 @@
       events: defaultEvents
     };
 
-    // Récupération localStorage avec fusion automatique pour ne jamais perdre le calendrier
-    let appData;
+    // Polyfill 100% compatible Tizen & navigateurs anciens
+    function pad2(n) {
+      return (n < 10 ? '0' : '') + n;
+    }
+
+    function formatDateKey(date) {
+      var y = date.getFullYear();
+      var m = pad2(date.getMonth() + 1);
+      var d = pad2(date.getDate());
+      return y + '-' + m + '-' + d;
+    }
+
+    function getFrenchHoliday(date) {
+      var d = date.getDate();
+      var m = date.getMonth() + 1;
+      var y = date.getFullYear();
+
+      if (d === 1 && m === 1) return "Jour de l'An";
+      if (d === 1 && m === 5) return "Fête du Travail";
+      if (d === 8 && m === 5) return "Victoire 1945";
+      if (d === 14 && m === 7) return "Fête Nationale";
+      if (d === 15 && m === 8) return "Assomption";
+      if (d === 1 && m === 11) return "Toussaint";
+      if (d === 11 && m === 11) return "Armistice 1918";
+      if (d === 25 && m === 12) return "Noël";
+
+      var a = y % 19, b = Math.floor(y / 100), c = y % 100;
+      var dd = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+      var g = Math.floor((b - f + 1) / 3), h = (19 * a + b - dd - g + 15) % 30;
+      var i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+      var mm = Math.floor((a + 11 * h + 22 * l) / 451);
+      var em = Math.floor((h + l - 7 * mm + 114) / 31);
+      var ed = ((h + l - 7 * mm + 114) % 31) + 1;
+      var easter = new Date(y, em - 1, ed);
+
+      var lPaques = new Date(easter.getTime() + 86400000);
+      var asc = new Date(easter.getTime() + 39 * 86400000);
+      var lPent = new Date(easter.getTime() + 50 * 86400000);
+
+      if (lPaques.getDate() === d && (lPaques.getMonth() + 1) === m) return "Lundi de Pâques";
+      if (asc.getDate() === d && (asc.getMonth() + 1) === m) return "Ascension";
+      if (lPent.getDate() === d && (lPent.getMonth() + 1) === m) return "Lundi de Pentecôte";
+
+      return null;
+    }
+
+    var appData = defaultData;
     try {
-      const stored = localStorage.getItem('agenda_vitrine_v4');
+      var stored = localStorage.getItem('agenda_vitrine_tizen_v1');
       if (stored) {
-        appData = JSON.parse(stored);
-        if (!appData.events || Object.keys(appData.events).length === 0) {
-          appData.events = defaultEvents;
+        var parsed = JSON.parse(stored);
+        if (parsed && parsed.events) {
+          appData = parsed;
         }
-      } else {
-        appData = defaultData;
       }
     } catch(e) {
       appData = defaultData;
     }
 
-    let cloudRef = null;
-    const fbConfig = localStorage.getItem('agenda_fb_config');
-    if (fbConfig && typeof firebase !== 'undefined') {
-      try {
-        const config = JSON.parse(fbConfig);
-        firebase.initializeApp(config);
-        const db = firebase.database();
-        cloudRef = db.ref('vitrine_agenda_v4');
-        cloudRef.on('value', (snap) => {
-          const val = snap.val();
-          if (val) {
-            appData = val;
-            if (!appData.events) appData.events = defaultEvents;
-            localStorage.setItem('agenda_vitrine_v4', JSON.stringify(appData));
-            render();
-          }
-        });
-      } catch(e) { console.warn("Firebase non initialisé", e); }
-    }
-
     function syncSave() {
-      localStorage.setItem('agenda_vitrine_v4', JSON.stringify(appData));
-      if (cloudRef) cloudRef.set(appData);
+      try {
+        localStorage.setItem('agenda_vitrine_tizen_v1', JSON.stringify(appData));
+      } catch(e) {}
       render();
     }
 
-    const dayLabels = ["Di", "L", "Ma", "Me", "J", "V", "S"];
-
-    function formatDateKey(date) {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
+    var dayLabels = ["Di", "L", "Ma", "Me", "J", "V", "S"];
 
     function render() {
-      // 1. Rappels urgents
-      const urgentEl = document.getElementById('urgentList');
+      // 1. Rappels
+      var urgentEl = document.getElementById('urgentList');
       if (urgentEl) {
-        urgentEl.innerHTML = (appData.urgents || []).map((item, idx) => `
-          <div class="urgent-row">
-            <span>• ${item}</span>
-            <div class="actions-btn">
-              <button onclick="editUrgent(${idx})" class="edit-btn" style="padding:2px 6px;">✎</button>
-              <button onclick="deleteUrgent(${idx})" class="danger" style="padding:2px 6px;">✕</button>
-            </div>
-          </div>
-        `).join('');
+        var uHtml = '';
+        var uList = appData.urgents || [];
+        for (var i = 0; i < uList.length; i++) {
+          uHtml += '<div class="urgent-row"><span>• ' + uList[i] + '</span><div class="actions-btn"><button onclick="editUrgent(' + i + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteUrgent(' + i + ')" class="danger" style="padding:2px 6px;">✕</button></div></div>';
+        }
+        urgentEl.innerHTML = uHtml;
       }
 
       // 2. Prêts
-      const pretsEl = document.getElementById('pretsList');
+      var pretsEl = document.getElementById('pretsList');
       if (pretsEl) {
-        pretsEl.innerHTML = (appData.prets || []).map(p => `
-          <li class="item-row ${p.type}">
-            <span><strong>${p.text}</strong> → ${p.dest}</span>
-            <div class="actions-btn">
-              <button onclick="editPret(${p.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
-              <button onclick="deleteItem('prets', ${p.id})" class="danger" style="padding:2px 6px;">✕</button>
-            </div>
-          </li>
-        `).join('');
+        var pHtml = '';
+        var pList = appData.prets || [];
+        for (var j = 0; j < pList.length; j++) {
+          var p = pList[j];
+          pHtml += '<li class="item-row ' + p.type + '"><span><strong>' + p.text + '</strong> → ' + p.dest + '</span><div class="actions-btn"><button onclick="editPret(' + p.id + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteItem(\'prets\', ' + p.id + ')" class="danger" style="padding:2px 6px;">✕</button></div></li>';
+        }
+        pretsEl.innerHTML = pHtml;
       }
 
       // 3. RH
-      const rhEl = document.getElementById('rhList');
+      var rhEl = document.getElementById('rhList');
       if (rhEl) {
-        rhEl.innerHTML = (appData.rh || []).map(r => `
-          <li class="item-row ${r.type}">
-            <span><strong>${r.text}</strong> : ${r.detail}</span>
-            <div class="actions-btn">
-              <button onclick="editRH(${r.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
-              <button onclick="deleteItem('rh', ${r.id})" class="danger" style="padding:2px 6px;">✕</button>
-            </div>
-          </li>
-        `).join('');
+        var rHtml = '';
+        var rList = appData.rh || [];
+        for (var k = 0; k < rList.length; k++) {
+          var r = rList[k];
+          rHtml += '<li class="item-row ' + r.type + '"><span><strong>' + r.text + '</strong> : ' + r.detail + '</span><div class="actions-btn"><button onclick="editRH(' + r.id + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteItem(\'rh\', ' + r.id + ')" class="danger" style="padding:2px 6px;">✕</button></div></li>';
+        }
+        rhEl.innerHTML = rHtml;
       }
 
       // 4. Commandes
-      let total = 0;
-      const cmdEl = document.getElementById('commandesList');
+      var cmdEl = document.getElementById('commandesList');
+      var total = 0;
       if (cmdEl) {
-        cmdEl.innerHTML = (appData.commandes || []).map(c => {
+        var cHtml = '';
+        var cList = appData.commandes || [];
+        for (var l = 0; l < cList.length; l++) {
+          var c = cList[l];
           total += (c.prix || 0);
-          return `
-            <li class="item-row">
-              <span>• ${c.item}</span>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <strong style="color: ${c.prix ? '#38bdf8' : '#94a3b8'}">${c.prix ? c.prix + ' €' : 'En devis'}</strong>
-                <button onclick="editCommande(${c.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
-                <button onclick="deleteItem('commandes', ${c.id})" class="danger" style="padding:2px 6px;">✕</button>
-              </div>
-            </li>
-          `;
-        }).join('');
-      }
-      const totalEl = document.getElementById('totalCommandes');
-      if (totalEl) totalEl.innerText = `Total : ${total.toLocaleString('fr-FR')} €`;
-
-      // 5. CALENDRIER DYNAMIQUE PERPÉTUEL
-      const agendaEl = document.getElementById('agendaScroll');
-      if (agendaEl) {
-        const now = new Date();
-        now.setHours(0,0,0,0);
-        const todayKey = formatDateKey(now);
-
-        const daysToDisplay = [];
-        const startDate = new Date(now);
-        startDate.setDate(now.getDate() - 1); // Démarre à hier pour repère
-
-        for (let i = 0; i < 35; i++) {
-          const d = new Date(startDate);
-          d.setDate(startDate.getDate() + i);
-          daysToDisplay.push(d);
+          cHtml += '<li class="item-row"><span>• ' + c.item + '</span><div style="display:flex; align-items:center; gap:6px;"><strong style="color: ' + (c.prix ? '#38bdf8' : '#94a3b8') + '">' + (c.prix ? c.prix + ' €' : 'En devis') + '</strong><button onclick="editCommande(' + c.id + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteItem(\'commandes\', ' + c.id + ')" class="danger" style="padding:2px 6px;">✕</button></div></li>';
         }
+        cmdEl.innerHTML = cHtml;
+      }
+      var totalEl = document.getElementById('totalCommandes');
+      if (totalEl) totalEl.innerText = 'Total : ' + total.toLocaleString('fr-FR') + ' €';
 
-        let html = '';
-        daysToDisplay.forEach(curDate => {
-          const key = formatDateKey(curDate);
-          const dayOfWeek = curDate.getDay();
-          const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-          const isToday = (key === todayKey);
-          const holidayName = getFrenchHoliday(curDate);
-          const isFerie = Boolean(holidayName);
+      // 5. CALENDRIER DYNAMIQUE (35 JOURS GLISSANTS)
+      var agendaEl = document.getElementById('agendaScroll');
+      if (agendaEl) {
+        var now = new Date();
+        var todayKey = formatDateKey(now);
+        var html = '';
 
-          const dayName = dayLabels[dayOfWeek];
-          const dayFormatted = `${dayName} ${curDate.getDate()}/${curDate.getMonth() + 1}`;
+        // Construit 35 jours à partir d'hier
+        for (var offset = -1; offset < 34; offset++) {
+          var curDate = new Date(now.getTime() + offset * 86400000);
+          var key = formatDateKey(curDate);
+          var dayOfWeek = curDate.getDay();
+          var isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+          var isToday = (key === todayKey);
+          var holidayName = getFrenchHoliday(curDate);
+          var isFerie = (holidayName !== null);
 
-          let eventText = (appData.events && appData.events[key]) ? appData.events[key] : '';
+          var dayName = dayLabels[dayOfWeek];
+          var dayFormatted = dayName + ' ' + curDate.getDate() + '/' + (curDate.getMonth() + 1);
+
+          var eventText = (appData.events && appData.events[key]) ? appData.events[key] : '';
           if (isFerie && !eventText) {
-            eventText = `${holidayName} (Férié)`;
+            eventText = holidayName + ' (Férié)';
           }
 
-          html += `
-            <div class="day-row ${isToday ? 'today' : ''} ${isFerie ? 'ferie' : ''} ${isWeekend ? 'weekend' : ''}">
-              <div class="day-date">${dayFormatted} ${isToday ? '★' : ''}</div>
-              <div class="day-content ${eventText ? '' : 'empty'}" onclick="editDateEvent('${key}', '${dayFormatted}')">
-                ${eventText || '—'}
-              </div>
-              <div class="actions-btn">
-                <button onclick="editDateEvent('${key}', '${dayFormatted}')" class="edit-btn" style="padding:2px 6px;">✎</button>
-                ${eventText ? `<button onclick="deleteDateEvent('${key}')" class="danger" style="padding:2px 6px;">✕</button>` : ''}
-              </div>
-            </div>
-          `;
-        });
+          var rowClass = 'day-row';
+          if (isToday) rowClass += ' today';
+          if (isFerie) rowClass += ' ferie';
+          if (isWeekend) rowClass += ' weekend';
+
+          html += '<div class="' + rowClass + '">';
+          html += '<div class="day-date">' + dayFormatted + (isToday ? ' ★' : '') + '</div>';
+          html += '<div class="day-content ' + (eventText ? '' : 'empty') + '" onclick="editDateEvent(\'' + key + '\', \'' + dayFormatted + '\')">' + (eventText || '—') + '</div>';
+          html += '<div class="actions-btn">';
+          html += '<button onclick="editDateEvent(\'' + key + '\', \'' + dayFormatted + '\')" class="edit-btn" style="padding:2px 6px;">✎</button>';
+          if (eventText) {
+            html += '<button onclick="deleteDateEvent(\'' + key + '\')" class="danger" style="padding:2px 6px;">✕</button>';
+          }
+          html += '</div></div>';
+        }
         agendaEl.innerHTML = html;
       }
     }
 
-    // Gestion calendrier dynamique
     function editDateEvent(dateKey, label) {
       document.getElementById('entryType').value = 'calendar_day';
       document.getElementById('entryKey').value = dateKey;
@@ -696,9 +636,10 @@
     }
 
     function deleteItem(cat, id) {
-      appData[cat] = appData[cat].filter(x => x.id !== id);
+      appData[cat] = appData[cat].filter(function(x) { return x.id !== id; });
       syncSave();
     }
+
     function deleteUrgent(idx) {
       appData.urgents.splice(idx, 1);
       syncSave();
@@ -745,7 +686,7 @@
     }
 
     function editPret(id) {
-      const p = appData.prets.find(x => x.id === id);
+      var p = appData.prets.find(function(x) { return x.id === id; });
       document.getElementById('entryType').value = 'pret';
       document.getElementById('entryKey').value = id;
       document.getElementById('modalTitle').innerText = "Modifier le prêt";
@@ -755,7 +696,7 @@
     }
 
     function editRH(id) {
-      const r = appData.rh.find(x => x.id === id);
+      var r = appData.rh.find(function(x) { return x.id === id; });
       document.getElementById('entryType').value = 'rh';
       document.getElementById('entryKey').value = id;
       document.getElementById('modalTitle').innerText = "Modifier RH";
@@ -765,7 +706,7 @@
     }
 
     function editCommande(id) {
-      const c = appData.commandes.find(x => x.id === id);
+      var c = appData.commandes.find(function(x) { return x.id === id; });
       document.getElementById('entryType').value = 'commande';
       document.getElementById('entryKey').value = id;
       document.getElementById('modalTitle').innerText = "Modifier la commande";
@@ -781,10 +722,10 @@
     }
 
     function saveModalData() {
-      const type = document.getElementById('entryType').value;
-      const keyOrId = document.getElementById('entryKey').value;
-      const v1 = document.getElementById('modalInput1').value.trim();
-      const v2 = document.getElementById('modalInput2').value.trim();
+      var type = document.getElementById('entryType').value;
+      var keyOrId = document.getElementById('entryKey').value;
+      var v1 = document.getElementById('modalInput1').value.trim();
+      var v2 = document.getElementById('modalInput2').value.trim();
 
       if (type === 'calendar_day') {
         if (!appData.events) appData.events = {};
@@ -801,23 +742,23 @@
         if (!v1) return alert("Veuillez saisir un texte");
         if (keyOrId === '-1') appData.prets.push({ id: Date.now(), text: v1, dest: v2 || 'Extérieur', type: 'tech' });
         else {
-          const item = appData.prets.find(x => x.id === parseInt(keyOrId));
-          item.text = v1; item.dest = v2;
+          var itemP = appData.prets.find(function(x) { return x.id === parseInt(keyOrId); });
+          itemP.text = v1; itemP.dest = v2;
         }
       } else if (type === 'rh') {
         if (!v1) return alert("Veuillez saisir un texte");
         if (keyOrId === '-1') appData.rh.push({ id: Date.now(), text: v1, detail: v2 || 'En cours', type: 'rh' });
         else {
-          const item = appData.rh.find(x => x.id === parseInt(keyOrId));
-          item.text = v1; item.detail = v2;
+          var itemR = appData.rh.find(function(x) { return x.id === parseInt(keyOrId); });
+          itemR.text = v1; itemR.detail = v2;
         }
       } else if (type === 'commande') {
         if (!v1) return alert("Veuillez saisir un texte");
-        const prix = parseFloat(v2) || 0;
+        var prix = parseFloat(v2) || 0;
         if (keyOrId === '-1') appData.commandes.push({ id: Date.now(), item: v1, prix: prix });
         else {
-          const item = appData.commandes.find(x => x.id === parseInt(keyOrId));
-          item.item = v1; item.prix = prix;
+          var itemC = appData.commandes.find(function(x) { return x.id === parseInt(keyOrId); });
+          itemC.item = v1; itemC.prix = prix;
         }
       }
 
@@ -826,26 +767,26 @@
     }
 
     function updateClock() {
-      const now = new Date();
+      var now = new Date();
       document.getElementById('liveClock').innerText = now.toLocaleTimeString('fr-FR');
-      const opt = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      var opt = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
       document.getElementById('liveDate').innerText = now.toLocaleDateString('fr-FR', opt);
     }
     setInterval(updateClock, 1000);
     updateClock();
 
     function exportData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
-      const dl = document.createElement('a');
+      var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      var dl = document.createElement('a');
       dl.setAttribute("href", dataStr);
       dl.setAttribute("download", "agenda_vitrine_sauvegarde.json");
       dl.click();
     }
 
     function importData(evt) {
-      const file = evt.target.files[0];
+      var file = evt.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
+      var reader = new FileReader();
       reader.onload = function(e) {
         try {
           appData = JSON.parse(e.target.result);
@@ -859,38 +800,13 @@
 
     function forceResetCalendar() {
       if (confirm("Réinitialiser le calendrier avec toutes les dates par défaut ?")) {
-        localStorage.removeItem('agenda_vitrine_v4');
+        try { localStorage.removeItem('agenda_vitrine_tizen_v1'); } catch(e) {}
         appData = defaultData;
         syncSave();
       }
     }
 
-    function openConfigFirebase() {
-      document.getElementById('firebaseConfigJson').value = localStorage.getItem('agenda_fb_config') || '';
-      document.getElementById('firebaseModal').classList.add('active');
-    }
-    function closeFirebaseModal() {
-      document.getElementById('firebaseModal').classList.remove('active');
-    }
-    function saveFirebaseConfig() {
-      const val = document.getElementById('firebaseConfigJson').value.trim();
-      if (!val) return;
-      try {
-        JSON.parse(val);
-        localStorage.setItem('agenda_fb_config', val);
-        alert("Configuration sauvegardée ! Actualisation...");
-        location.reload();
-      } catch(e) {
-        alert("Format JSON invalide.");
-      }
-    }
-    function disableCloud() {
-      localStorage.removeItem('agenda_fb_config');
-      alert("Synchro Cloud désactivée.");
-      location.reload();
-    }
-
-    // Premier rendu immédiat
+    // Premier rendu garanti
     render();
   </script>
 </body>
