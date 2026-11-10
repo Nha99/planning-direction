@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agenda & Direction - Écran Vitrine</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
-  <!-- Firebase SDKs pour la synchronisation en direct -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <style>
     :root {
       --bg: #070a11;
@@ -158,7 +155,7 @@
       gap: 10px;
       resize: vertical;
       overflow: hidden;
-      min-height: 280px;
+      min-height: 320px;
       height: 520px;
       max-height: 85vh;
       position: relative;
@@ -176,17 +173,17 @@
 
     .day-row {
       display: grid;
-      grid-template-columns: 120px 1fr auto;
+      grid-template-columns: 125px 1fr auto;
       align-items: center;
       gap: 12px;
       padding: 8px 12px;
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.02);
-      border: 1px solid transparent;
+      border: 1px solid rgba(255, 255, 255, 0.04);
       font-size: 0.88rem;
       transition: all 0.2s;
     }
-    .day-row:hover { background: rgba(255, 255, 255, 0.04); }
+    .day-row:hover { background: rgba(255, 255, 255, 0.06); }
 
     /* Week-end */
     .day-row.weekend {
@@ -199,28 +196,28 @@
 
     /* Surlignage Jour J */
     .day-row.today {
-      background: rgba(56, 189, 248, 0.16);
-      border: 1.5px solid #38bdf8;
+      background: rgba(56, 189, 248, 0.16) !important;
+      border: 1.5px solid #38bdf8 !important;
       box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
-      opacity: 1;
+      opacity: 1 !important;
     }
     .day-row.today .day-date {
-      color: #38bdf8;
+      color: #38bdf8 !important;
       font-weight: 800;
     }
 
     /* Férié en Rouge */
     .day-row.ferie {
-      background: rgba(239, 68, 68, 0.14);
-      border-left: 4px solid #ef4444;
-      opacity: 1;
+      background: rgba(239, 68, 68, 0.14) !important;
+      border-left: 4px solid #ef4444 !important;
+      opacity: 1 !important;
     }
     .day-row.ferie .day-date {
-      color: #f87171;
+      color: #f87171 !important;
       font-weight: 800;
     }
     .day-row.ferie .day-content {
-      color: #fca5a5;
+      color: #fca5a5 !important;
       font-weight: 600;
     }
 
@@ -228,6 +225,7 @@
       font-weight: 700;
       color: #cbd5e1;
       font-size: 0.85rem;
+      letter-spacing: 0.02em;
     }
     .day-content {
       flex: 1;
@@ -352,12 +350,12 @@
   <!-- ZONE AGENDA DYNAMIQUE REDIMENSIONNABLE -->
   <div class="agenda-resizable-box" id="agendaBox">
     <div class="card-header">
-      <div class="card-title">📅 Agenda Prévisionnel</div>
+      <div class="card-title">📅 Agenda Prévisionnel (35 jours)</div>
       <div style="font-size: 0.75rem; color: #94a3b8;">Clique sur un jour pour ajouter ou modifier</div>
     </div>
     
     <div class="agenda-scroll-container" id="agendaScroll">
-      <!-- Généré dynamiquement jour par jour avec week-ends -->
+      <!-- Les jours s'affichent ici -->
     </div>
   </div>
 
@@ -381,6 +379,7 @@
       <button onclick="exportData()">💾 Exporter JSON</button>
       <button onclick="document.getElementById('importFile').click()">📂 Importer JSON</button>
       <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+      <button onclick="forceResetCalendar()" style="background: #334155; font-size: 0.7rem;">↺ Réinitialiser affichage</button>
     </div>
   </div>
 
@@ -418,8 +417,8 @@
   </div>
 
   <script>
-    // Événements indexés par clé ISO YYYY-MM-DD
-    const initialEvents = {
+    // Événements initiaux indexés par clé ISO YYYY-MM-DD
+    const defaultEvents = {
       "2026-11-09": "SAVPRO BAC / Poterne / Caillaux",
       "2026-11-10": "11h30 Seb. Donadien",
       "2026-11-11": "Armistice (Férié)",
@@ -442,41 +441,42 @@
       "2026-12-04": "Audit sécurité installations"
     };
 
-    // Jours fériés français officiels (fixes et mobiles)
-    function isFrenchPublicHoliday(date) {
-      const d = date.getDate();
-      const m = date.getMonth() + 1;
-      const y = date.getFullYear();
+    // Calcul garanti des jours fériés français
+    function getFrenchHoliday(date) {
+      try {
+        const d = date.getDate();
+        const m = date.getMonth() + 1;
+        const y = date.getFullYear();
 
-      // Fixes
-      if (d === 1 && m === 1) return "Jour de l'An";
-      if (d === 1 && m === 5) return "Fête du Travail";
-      if (d === 8 && m === 5) return "Victoire 1945";
-      if (d === 14 && m === 7) return "Fête Nationale";
-      if (d === 15 && m === 8) return "Assomption";
-      if (d === 1 && m === 11) return "Toussaint";
-      if (d === 11 && m === 11) return "Armistice 1918";
-      if (d === 25 && m === 12) return "Noël";
+        if (d === 1 && m === 1) return "Jour de l'An";
+        if (d === 1 && m === 5) return "Fête du Travail";
+        if (d === 8 && m === 5) return "Victoire 1945";
+        if (d === 14 && m === 7) return "Fête Nationale";
+        if (d === 15 && m === 8) return "Assomption";
+        if (d === 1 && m === 11) return "Toussaint";
+        if (d === 11 && m === 11) return "Armistice 1918";
+        if (d === 25 && m === 12) return "Noël";
 
-      // Mobiles (Pâques, Ascension, Pentecôte)
-      const a = y % 19, b = Math.floor(y / 100), c = y % 100;
-      const dd = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
-      const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - dd - g + 15) % 30;
-      const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
-      const mm = Math.floor((a + 11 * h + 22 * l) / 451);
-      const easterMonth = Math.floor((h + l - 7 * mm + 114) / 31);
-      const easterDay = ((h + l - 7 * mm + 114) % 31) + 1;
-      const easter = new Date(y, easterMonth - 1, easterDay);
+        // Algorithme de Butcher pour Pâques
+        const a = y % 19, b = Math.floor(y / 100), c = y % 100;
+        const dd = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+        const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - dd - g + 15) % 30;
+        const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+        const mm = Math.floor((a + 11 * h + 22 * l) / 451);
+        const em = Math.floor((h + l - 7 * mm + 114) / 31);
+        const ed = ((h + l - 7 * mm + 114) % 31) + 1;
+        const easter = new Date(y, em - 1, ed);
 
-      const lPaques = new Date(easter); lPaques.setDate(easter.getDate() + 1);
-      const asc = new Date(easter); asc.setDate(easter.getDate() + 39);
-      const lPent = new Date(easter); lPent.setDate(easter.getDate() + 50);
+        const lPaques = new Date(easter); lPaques.setDate(easter.getDate() + 1);
+        const asc = new Date(easter); asc.setDate(easter.getDate() + 39);
+        const lPent = new Date(easter); lPent.setDate(easter.getDate() + 50);
 
-      const check = (dt) => dt.getDate() === d && (dt.getMonth() + 1) === m;
-      if (check(lPaques)) return "Lundi de Pâques";
-      if (check(asc)) return "Ascension";
-      if (check(lPent)) return "Lundi de Pentecôte";
-
+        if (lPaques.getDate() === d && (lPaques.getMonth() + 1) === m) return "Lundi de Pâques";
+        if (asc.getDate() === d && (asc.getMonth() + 1) === m) return "Ascension";
+        if (lPent.getDate() === d && (lPent.getMonth() + 1) === m) return "Lundi de Pentecôte";
+      } catch(err) {
+        // En cas d'erreur de date, ne bloque pas le calendrier
+      }
       return null;
     }
 
@@ -508,34 +508,47 @@
         { id: 7, item: "Panneaux déco", prix: 1100 },
         { id: 8, item: "Table à langer", prix: 0 }
       ],
-      events: initialEvents
+      events: defaultEvents
     };
 
-    let appData = JSON.parse(localStorage.getItem('agenda_vitrine_v3')) || defaultData;
-    let cloudRef = null;
+    // Récupération localStorage avec fusion automatique pour ne jamais perdre le calendrier
+    let appData;
+    try {
+      const stored = localStorage.getItem('agenda_vitrine_v4');
+      if (stored) {
+        appData = JSON.parse(stored);
+        if (!appData.events || Object.keys(appData.events).length === 0) {
+          appData.events = defaultEvents;
+        }
+      } else {
+        appData = defaultData;
+      }
+    } catch(e) {
+      appData = defaultData;
+    }
 
-    // Config Firebase si renseignée
+    let cloudRef = null;
     const fbConfig = localStorage.getItem('agenda_fb_config');
-    if (fbConfig) {
+    if (fbConfig && typeof firebase !== 'undefined') {
       try {
         const config = JSON.parse(fbConfig);
         firebase.initializeApp(config);
         const db = firebase.database();
-        cloudRef = db.ref('vitrine_agenda_v3');
+        cloudRef = db.ref('vitrine_agenda_v4');
         cloudRef.on('value', (snap) => {
           const val = snap.val();
           if (val) {
             appData = val;
-            if (!appData.events) appData.events = {};
-            localStorage.setItem('agenda_vitrine_v3', JSON.stringify(appData));
+            if (!appData.events) appData.events = defaultEvents;
+            localStorage.setItem('agenda_vitrine_v4', JSON.stringify(appData));
             render();
           }
         });
-      } catch(e) { console.error(e); }
+      } catch(e) { console.warn("Firebase non initialisé", e); }
     }
 
     function syncSave() {
-      localStorage.setItem('agenda_vitrine_v3', JSON.stringify(appData));
+      localStorage.setItem('agenda_vitrine_v4', JSON.stringify(appData));
       if (cloudRef) cloudRef.set(appData);
       render();
     }
@@ -551,102 +564,117 @@
 
     function render() {
       // 1. Rappels urgents
-      document.getElementById('urgentList').innerHTML = (appData.urgents || []).map((item, idx) => `
-        <div class="urgent-row">
-          <span>• ${item}</span>
-          <div class="actions-btn">
-            <button onclick="editUrgent(${idx})" class="edit-btn" style="padding:2px 6px;">✎</button>
-            <button onclick="deleteUrgent(${idx})" class="danger" style="padding:2px 6px;">✕</button>
+      const urgentEl = document.getElementById('urgentList');
+      if (urgentEl) {
+        urgentEl.innerHTML = (appData.urgents || []).map((item, idx) => `
+          <div class="urgent-row">
+            <span>• ${item}</span>
+            <div class="actions-btn">
+              <button onclick="editUrgent(${idx})" class="edit-btn" style="padding:2px 6px;">✎</button>
+              <button onclick="deleteUrgent(${idx})" class="danger" style="padding:2px 6px;">✕</button>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `).join('');
+      }
 
       // 2. Prêts
-      document.getElementById('pretsList').innerHTML = (appData.prets || []).map(p => `
-        <li class="item-row ${p.type}">
-          <span><strong>${p.text}</strong> → ${p.dest}</span>
-          <div class="actions-btn">
-            <button onclick="editPret(${p.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
-            <button onclick="deleteItem('prets', ${p.id})" class="danger" style="padding:2px 6px;">✕</button>
-          </div>
-        </li>
-      `).join('');
+      const pretsEl = document.getElementById('pretsList');
+      if (pretsEl) {
+        pretsEl.innerHTML = (appData.prets || []).map(p => `
+          <li class="item-row ${p.type}">
+            <span><strong>${p.text}</strong> → ${p.dest}</span>
+            <div class="actions-btn">
+              <button onclick="editPret(${p.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
+              <button onclick="deleteItem('prets', ${p.id})" class="danger" style="padding:2px 6px;">✕</button>
+            </div>
+          </li>
+        `).join('');
+      }
 
       // 3. RH
-      document.getElementById('rhList').innerHTML = (appData.rh || []).map(r => `
-        <li class="item-row ${r.type}">
-          <span><strong>${r.text}</strong> : ${r.detail}</span>
-          <div class="actions-btn">
-            <button onclick="editRH(${r.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
-            <button onclick="deleteItem('rh', ${r.id})" class="danger" style="padding:2px 6px;">✕</button>
-          </div>
-        </li>
-      `).join('');
+      const rhEl = document.getElementById('rhList');
+      if (rhEl) {
+        rhEl.innerHTML = (appData.rh || []).map(r => `
+          <li class="item-row ${r.type}">
+            <span><strong>${r.text}</strong> : ${r.detail}</span>
+            <div class="actions-btn">
+              <button onclick="editRH(${r.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
+              <button onclick="deleteItem('rh', ${r.id})" class="danger" style="padding:2px 6px;">✕</button>
+            </div>
+          </li>
+        `).join('');
+      }
 
       // 4. Commandes
       let total = 0;
-      document.getElementById('commandesList').innerHTML = (appData.commandes || []).map(c => {
-        total += (c.prix || 0);
-        return `
-          <li class="item-row">
-            <span>• ${c.item}</span>
-            <div style="display:flex; align-items:center; gap:6px;">
-              <strong style="color: ${c.prix ? '#38bdf8' : '#94a3b8'}">${c.prix ? c.prix + ' €' : 'En devis'}</strong>
-              <button onclick="editCommande(${c.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
-              <button onclick="deleteItem('commandes', ${c.id})" class="danger" style="padding:2px 6px;">✕</button>
-            </div>
-          </li>
-        `;
-      }).join('');
-      document.getElementById('totalCommandes').innerText = `Total : ${total.toLocaleString('fr-FR')} €`;
-
-      // 5. CALENDRIER DYNAMIQUE PERPÉTUEL (Hier + 35 jours à venir)
-      const now = new Date();
-      now.setHours(0,0,0,0);
-      const todayKey = formatDateKey(now);
-
-      const daysToDisplay = [];
-      const startDate = new Date(now);
-      startDate.setDate(now.getDate() - 1); // Affiche hier pour repère
-
-      for (let i = 0; i < 35; i++) {
-        const d = new Date(startDate);
-        d.setDate(startDate.getDate() + i);
-        daysToDisplay.push(d);
+      const cmdEl = document.getElementById('commandesList');
+      if (cmdEl) {
+        cmdEl.innerHTML = (appData.commandes || []).map(c => {
+          total += (c.prix || 0);
+          return `
+            <li class="item-row">
+              <span>• ${c.item}</span>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <strong style="color: ${c.prix ? '#38bdf8' : '#94a3b8'}">${c.prix ? c.prix + ' €' : 'En devis'}</strong>
+                <button onclick="editCommande(${c.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
+                <button onclick="deleteItem('commandes', ${c.id})" class="danger" style="padding:2px 6px;">✕</button>
+              </div>
+            </li>
+          `;
+        }).join('');
       }
+      const totalEl = document.getElementById('totalCommandes');
+      if (totalEl) totalEl.innerText = `Total : ${total.toLocaleString('fr-FR')} €`;
 
-      let html = '';
-      daysToDisplay.forEach(curDate => {
-        const key = formatDateKey(curDate);
-        const dayOfWeek = curDate.getDay();
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-        const isToday = (key === todayKey);
-        const holidayName = isFrenchPublicHoliday(curDate);
-        const isFerie = !!holidayName;
+      // 5. CALENDRIER DYNAMIQUE PERPÉTUEL
+      const agendaEl = document.getElementById('agendaScroll');
+      if (agendaEl) {
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        const todayKey = formatDateKey(now);
 
-        const dayName = dayLabels[dayOfWeek];
-        const dayFormatted = `${dayName} ${curDate.getDate()}/${curDate.getMonth() + 1}`;
+        const daysToDisplay = [];
+        const startDate = new Date(now);
+        startDate.setDate(now.getDate() - 1); // Démarre à hier pour repère
 
-        let eventText = (appData.events && appData.events[key]) ? appData.events[key] : '';
-        if (isFerie && !eventText) {
-          eventText = `${holidayName} (Férié)`;
+        for (let i = 0; i < 35; i++) {
+          const d = new Date(startDate);
+          d.setDate(startDate.getDate() + i);
+          daysToDisplay.push(d);
         }
 
-        html += `
-          <div class="day-row ${isToday ? 'today' : ''} ${isFerie ? 'ferie' : ''} ${isWeekend ? 'weekend' : ''}">
-            <div class="day-date">${dayFormatted} ${isToday ? '★' : ''}</div>
-            <div class="day-content ${eventText ? '' : 'empty'}" onclick="editDateEvent('${key}', '${dayFormatted}')">
-              ${eventText || '—'}
-            </div>
-            <div class="actions-btn">
-              <button onclick="editDateEvent('${key}', '${dayFormatted}')" class="edit-btn" style="padding:2px 6px;">✎</button>
-              ${eventText ? `<button onclick="deleteDateEvent('${key}')" class="danger" style="padding:2px 6px;">✕</button>` : ''}
-            </div>
-          </div>
-        `;
-      });
+        let html = '';
+        daysToDisplay.forEach(curDate => {
+          const key = formatDateKey(curDate);
+          const dayOfWeek = curDate.getDay();
+          const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+          const isToday = (key === todayKey);
+          const holidayName = getFrenchHoliday(curDate);
+          const isFerie = Boolean(holidayName);
 
-      document.getElementById('agendaScroll').innerHTML = html;
+          const dayName = dayLabels[dayOfWeek];
+          const dayFormatted = `${dayName} ${curDate.getDate()}/${curDate.getMonth() + 1}`;
+
+          let eventText = (appData.events && appData.events[key]) ? appData.events[key] : '';
+          if (isFerie && !eventText) {
+            eventText = `${holidayName} (Férié)`;
+          }
+
+          html += `
+            <div class="day-row ${isToday ? 'today' : ''} ${isFerie ? 'ferie' : ''} ${isWeekend ? 'weekend' : ''}">
+              <div class="day-date">${dayFormatted} ${isToday ? '★' : ''}</div>
+              <div class="day-content ${eventText ? '' : 'empty'}" onclick="editDateEvent('${key}', '${dayFormatted}')">
+                ${eventText || '—'}
+              </div>
+              <div class="actions-btn">
+                <button onclick="editDateEvent('${key}', '${dayFormatted}')" class="edit-btn" style="padding:2px 6px;">✎</button>
+                ${eventText ? `<button onclick="deleteDateEvent('${key}')" class="danger" style="padding:2px 6px;">✕</button>` : ''}
+              </div>
+            </div>
+          `;
+        });
+        agendaEl.innerHTML = html;
+      }
     }
 
     // Gestion calendrier dynamique
@@ -667,7 +695,6 @@
       }
     }
 
-    // Gestion suppression autres items
     function deleteItem(cat, id) {
       appData[cat] = appData[cat].filter(x => x.id !== id);
       syncSave();
@@ -677,7 +704,6 @@
       syncSave();
     }
 
-    // Modales Ajout / Edition
     function openModal(type) {
       document.getElementById('entryType').value = type;
       document.getElementById('entryKey').value = '-1';
@@ -799,7 +825,6 @@
       closeModal();
     }
 
-    // Horloge
     function updateClock() {
       const now = new Date();
       document.getElementById('liveClock').innerText = now.toLocaleTimeString('fr-FR');
@@ -809,7 +834,6 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Export / Import JSON
     function exportData() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
       const dl = document.createElement('a');
@@ -825,7 +849,7 @@
       reader.onload = function(e) {
         try {
           appData = JSON.parse(e.target.result);
-          if (!appData.events) appData.events = {};
+          if (!appData.events) appData.events = defaultEvents;
           syncSave();
           alert("Données importées avec succès !");
         } catch(err) { alert("Fichier JSON invalide"); }
@@ -833,7 +857,14 @@
       reader.readAsText(file);
     }
 
-    // Configuration Firebase
+    function forceResetCalendar() {
+      if (confirm("Réinitialiser le calendrier avec toutes les dates par défaut ?")) {
+        localStorage.removeItem('agenda_vitrine_v4');
+        appData = defaultData;
+        syncSave();
+      }
+    }
+
     function openConfigFirebase() {
       document.getElementById('firebaseConfigJson').value = localStorage.getItem('agenda_fb_config') || '';
       document.getElementById('firebaseModal').classList.add('active');
@@ -847,7 +878,7 @@
       try {
         JSON.parse(val);
         localStorage.setItem('agenda_fb_config', val);
-        alert("Configuration sauvegardée ! Actualisation en cours...");
+        alert("Configuration sauvegardée ! Actualisation...");
         location.reload();
       } catch(e) {
         alert("Format JSON invalide.");
@@ -859,6 +890,7 @@
       location.reload();
     }
 
+    // Premier rendu immédiat
     render();
   </script>
 </body>
