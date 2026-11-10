@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Direction & Exploitation - Tableau de Bord Vitrine</title>
+  <title>Territoire Maison Blanche 75013 - Tableau de Bord Vitrine</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -30,7 +30,60 @@
       overflow-x: hidden;
     }
 
-    /* Barre de navigation / Onglets */
+    /* Écran de verrouillage total au chargement */
+    #lockOverlay {
+      position: fixed;
+      inset: 0;
+      background: #050811;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .lock-box {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 30px 24px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+    }
+    .lock-icon {
+      font-size: 2.2rem;
+      background: rgba(56, 189, 248, 0.1);
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .lock-box input[type="password"] {
+      width: 100%;
+      padding: 12px 14px;
+      background: #1e293b;
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      color: white;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      text-align: center;
+      letter-spacing: 0.25em;
+    }
+    .lock-box input[type="password"]:focus {
+      outline: none;
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+
+    /* En-tête / Navigation */
     header {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -89,6 +142,7 @@
     }
     button:hover { background: #334155; }
     button.primary { background: #0284c7; border-color: var(--accent-color); }
+    button.primary:hover { background: #0369a1; }
     button.danger { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
     button.danger:hover { background: #dc2626; color: white; }
     button.edit-btn { background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.3); color: var(--accent-color); }
@@ -122,10 +176,11 @@
       gap: 6px;
     }
 
-    /* Onglet 1 : Agenda */
+    /* Onglets de contenu */
     .tab-content { display: none; flex-direction: column; gap: 12px; }
     .tab-content.active { display: flex; }
 
+    /* Onglet 1 : Agenda */
     .urgent-banner {
       background: linear-gradient(90deg, rgba(239, 68, 68, 0.18), rgba(245, 158, 11, 0.12));
       border: 1px solid rgba(239, 68, 68, 0.4);
@@ -235,7 +290,7 @@
     .day-content.empty { color: #475569; font-style: italic; }
     .actions-btn { display: flex; align-items: center; gap: 6px; }
 
-    /* Onglet 2 : Territoire (Gymnases & TEP) */
+    /* Onglet 2 : Territoire Maison Blanche */
     .territory-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -265,8 +320,21 @@
       border-radius: 6px;
       color: #cbd5e1;
     }
-    .venue-meta { font-size: 0.8rem; color: var(--text-dim); line-height: 1.4; }
+    .venue-meta { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
     .venue-meta strong { color: #e2e8f0; }
+    .venue-phone-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
     .venue-events-box {
       background: rgba(0, 0, 0, 0.25);
       border: 1px solid rgba(255, 255, 255, 0.04);
@@ -287,7 +355,7 @@
       align-items: center;
     }
 
-    /* Onglet 3 : Moodboard Cheffe (Blocs Mémo & Travail) */
+    /* Onglet 3 : Mémo et Suivi */
     .moodboard-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -301,9 +369,6 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      position: relative;
-    }
-    .memo-card.highlight {
       border-top: 4px solid #10b981;
     }
     .memo-title-box {
@@ -428,13 +493,27 @@
 </head>
 <body>
 
-  <!-- Navigation et Horloge -->
+  <!-- ÉCRAN DE VERROUILLAGE TOTAL INITIAL (On ne voit rien tant que non déverrouillé) -->
+  <div id="lockOverlay">
+    <div class="lock-box">
+      <div class="lock-icon">🔒</div>
+      <div>
+        <div style="font-weight: 800; font-size: 1.15rem; color: #f8fafc; letter-spacing: 0.05em;">ACCÈS RESTREINT</div>
+        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Territoire Maison Blanche 75013</div>
+      </div>
+      <input type="password" id="gatePassInput" placeholder="••••" maxlength="10" onkeypress="if(event.key === 'Enter') checkGateAuth()">
+      <button onclick="checkGateAuth()" class="primary" style="width: 100%; padding: 10px; font-size: 0.9rem;">Déverrouiller l'écran</button>
+      <div id="gateErrorMsg" style="font-size: 0.78rem; color: #f87171; display: none;">Mot de passe incorrect</div>
+    </div>
+  </div>
+
+  <!-- Application Principale (Masquée au départ) -->
   <header>
     <div class="brand">
       <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('agenda')">📅 Agenda</button>
         <button class="tab-btn" onclick="switchTab('territoire')">📍 Territoire (Équipements)</button>
-        <button class="tab-btn" onclick="switchTab('moodboard')">📋 Mémo & Travail Cheffe</button>
+        <button class="tab-btn" onclick="switchTab('moodboard')">📋 Mémo et Suivi</button>
         <button class="tab-btn" onclick="switchTab('parametres')">⚙️ Paramètres & Couleurs</button>
       </div>
     </div>
@@ -443,7 +522,7 @@
         <div class="clock" id="liveClock">--:--:--</div>
         <div class="date-str" id="liveDate">Chargement...</div>
       </div>
-      <button id="lockBtn" onclick="toggleLock()" style="padding: 6px 10px; font-size: 0.8rem;">🔒 Verrouillé</button>
+      <button onclick="relockScreen()" style="padding: 6px 10px; font-size: 0.78rem;">🔒 Verrouiller</button>
     </div>
   </header>
 
@@ -453,7 +532,7 @@
     <div class="urgent-banner">
       <div class="urgent-header">
         <div class="urgent-title">⚠️ RAPPELS IMPORTANTS & ÉCHÉANCES</div>
-        <button onclick="reqAuth(openUrgentModal)" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajouter un rappel</button>
+        <button onclick="openUrgentModal()" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajouter un rappel</button>
       </div>
       <div class="urgent-items" id="urgentList"></div>
     </div>
@@ -463,7 +542,7 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">🔄 Prêts de matériel</div>
-          <button onclick="reqAuth(function(){ openGenericModal('pret'); })" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
+          <button onclick="openGenericModal('pret')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
         </div>
         <ul class="item-list" id="pretsList"></ul>
       </div>
@@ -471,7 +550,7 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">👥 RH & Alertes</div>
-          <button onclick="reqAuth(function(){ openGenericModal('rh'); })" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
+          <button onclick="openGenericModal('rh')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
         </div>
         <ul class="item-list" id="rhList"></ul>
       </div>
@@ -491,34 +570,34 @@
       <div class="card-header">
         <div class="card-title">📦 Commandes & Devis</div>
         <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-color);" id="totalCommandes">Total : 0 €</div>
-        <button onclick="reqAuth(function(){ openGenericModal('commande'); })" style="padding: 3px 8px; font-size: 0.72rem;">+ Commande</button>
+        <button onclick="openGenericModal('commande')" style="padding: 3px 8px; font-size: 0.72rem;">+ Commande</button>
       </div>
       <ul class="item-list" id="commandesList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></ul>
     </div>
   </div>
 
-  <!-- ================= ONGLET 2 : TERRITOIRE ================= -->
+  <!-- ================= ONGLET 2 : TERRITOIRE MAISON BLANCHE ================= -->
   <div id="tab-territoire" class="tab-content">
     <div class="card-header" style="background: var(--card-bg); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--card-border);">
-      <div class="card-title" style="font-size: 0.95rem;">📍 Circonscription 13e • Équipements & Interventions sur site</div>
-      <div style="font-size: 0.8rem; color: #94a3b8;">Fiches pratiques & événements locaux</div>
+      <div class="card-title" style="font-size: 0.95rem;">📍 Territoire Maison Blanche 75013 • Équipements & Interventions sur site</div>
+      <div style="font-size: 0.8rem; color: #94a3b8;">Fiches pratiques, coordonnées & événements locaux</div>
     </div>
     <div class="territory-grid" id="territoryContainer"></div>
   </div>
 
-  <!-- ================= ONGLET 3 : MOODBOARD CHEFFE ================= -->
+  <!-- ================= ONGLET 3 : MÉMO ET SUIVI ================= -->
   <div id="tab-moodboard" class="tab-content">
     <div class="card-header" style="background: var(--card-bg); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--card-border);">
       <div>
-        <div class="card-title" style="font-size: 0.95rem;">📋 Tableau de bord & Méthode de travail Cheffe</div>
-        <div style="font-size: 0.78rem; color: #94a3b8;">Digitalisation des mémos, tableaux de suivi, devis et consignes</div>
+        <div class="card-title" style="font-size: 0.95rem;">📋 Mémo et Suivi Opérationnel</div>
+        <div style="font-size: 0.78rem; color: #94a3b8;">Tableaux de suivi, mémos de gestion, devis et consignes</div>
       </div>
-      <button onclick="reqAuth(addNewMemoCard)" class="primary">+ Ajouter un bloc</button>
+      <button onclick="addNewMemoCard()" class="primary">+ Ajouter un bloc</button>
     </div>
     <div class="moodboard-grid" id="moodboardContainer"></div>
   </div>
 
-  <!-- ================= ONGLET 4 : PARAMÈTRES ================= -->
+  <!-- ================= ONGLET 4 : PARAMÈTRES (SANS SÉCURITÉ) ================= -->
   <div id="tab-parametres" class="tab-content">
     <div class="card">
       <div class="card-header">
@@ -577,27 +656,12 @@
         </div>
       </div>
     </div>
-
-    <!-- Sécurité & Mot de Passe -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">🔐 Sécurité & Accès aux Modifications</div>
-      </div>
-      <p style="font-size: 0.82rem; color: #94a3b8; line-height: 1.4;">
-        Le lien GitHub étant public, toute personne ayant l'adresse peut visualiser l'agenda. Ce mot de passe protège les <strong>ajouts, modifications et suppressions</strong> pour que seuls vous et votre cheffe puissiez éditer l'affichage.
-      </p>
-      <div style="display: flex; gap: 10px; max-width: 400px; margin-top: 6px;">
-        <input type="password" id="newPassInput" placeholder="Nouveau mot de passe">
-        <button onclick="changePassword()" class="primary">Définir mot de passe</button>
-      </div>
-      <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Mot de passe actuel par défaut : <strong>1234</strong></div>
-    </div>
   </div>
 
   <!-- Barre d'administration basse -->
   <div class="admin-bar">
     <div style="font-size: 0.75rem; color: #94a3b8;">
-      Samsung QM43R • Agenda Sécurisé • Circonscription 13e
+      Samsung QM43R • Territoire Maison Blanche 75013
     </div>
     <div style="display: flex; gap: 8px;">
       <button onclick="exportData()">💾 Exporter JSON</button>
@@ -623,21 +687,96 @@
     </div>
   </div>
 
-  <!-- Modal Mot de Passe -->
-  <div class="modal" id="authModal">
-    <div class="modal-card" style="max-width: 360px;">
-      <h3>🔐 Accès Sécurisé</h3>
-      <p style="font-size: 0.82rem; color: #94a3b8;">Entrez le mot de passe pour autoriser les modifications :</p>
-      <input type="password" id="authPassInput" placeholder="Mot de passe">
-      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
-        <button onclick="closeAuthModal()">Annuler</button>
-        <button onclick="validateAuth()" class="primary">Déverrouiller</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // Polyfills compatibilité Tizen
+    // Empreinte SHA-256 de vérification (Le mot de passe n'apparaît JAMAIS en clair dans le code F12)
+    var HASH_TARGET = "da9d2b79c84bc1e8e257dcea2dfc4297e7bd0edf903f268fc5d4846ea1dd45dd";
+
+    // Algorithme SHA-256 en JS pur 100% compatible Tizen & hors ligne
+    function sha256Pure(ascii) {
+      function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
+      var mathPow = Math.pow;
+      var maxWord = mathPow(2, 32);
+      var lengthProperty = 'length';
+      var i, j;
+      var result = '';
+      var words = [];
+      var asciiBitLength = ascii[lengthProperty] * 8;
+      var hash = [];
+      var k = [];
+      var primeCounter = 0;
+      var isComposite = {};
+      for (var candidate = 2; primeCounter < 64; candidate++) {
+        if (!isComposite[candidate]) {
+          for (i = 0; i < 313; i += candidate) { isComposite[i] = candidate; }
+          hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+          k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+        }
+      }
+      ascii += '\x80';
+      while (ascii[lengthProperty] % 64 - 56) ascii += '\x00';
+      for (i = 0; i < ascii[lengthProperty]; i++) {
+        j = ascii.charCodeAt(i);
+        if (j >> 8) return;
+        words[i >> 2] |= j << ((3 - i) % 4) * 8;
+      }
+      words[words[lengthProperty]] = ((asciiBitLength / maxWord) | 0);
+      words[words[lengthProperty]] = (asciiBitLength);
+      for (j = 0; j < words[lengthProperty];) {
+        var w = words.slice(j, j += 16);
+        var oldHash = hash;
+        hash = hash.slice(0, 8);
+        for (i = 0; i < 64; i++) {
+          var w15 = w[i - 15], w2 = w[i - 2];
+          var s0 = rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3);
+          var s1 = rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10);
+          var ch = (hash[4] & hash[5]) ^ (~hash[4] & hash[6]);
+          var temp1 = hash[7] + (rightRotate(hash[4], 6) ^ rightRotate(hash[4], 11) ^ rightRotate(hash[4], 25)) + ch + k[i] + (w[i] = (i < 16) ? w[i] : (w[i - 16] + s0 + w[i - 7] + s1) | 0);
+          var maj = (hash[0] & hash[1]) ^ (hash[0] & hash[2]) ^ (hash[1] & hash[2]);
+          var temp2 = (rightRotate(hash[0], 2) ^ rightRotate(hash[0], 13) ^ rightRotate(hash[0], 22)) + maj;
+          hash = [(temp1 + temp2) | 0].concat(hash);
+          hash[4] = (hash[4] + temp1) | 0;
+        }
+        for (i = 0; i < 8; i++) { hash[i] = (hash[i] + oldHash[i]) | 0; }
+      }
+      for (i = 0; i < 8; i++) {
+        for (i2 = 3; i2 >= 0; i2--) {
+          var b = (hash[i] >> (8 * i2)) & 255;
+          result += ((b < 16) ? 0 : '') + b.toString(16);
+        }
+      }
+      return result;
+    }
+
+    function checkGateAuth() {
+      var val = document.getElementById('gatePassInput').value;
+      var hashed = sha256Pure(val);
+      if (hashed === HASH_TARGET) {
+        document.getElementById('lockOverlay').style.display = 'none';
+        sessionStorage.setItem('tizen_gate_open', '1');
+      } else {
+        var err = document.getElementById('gateErrorMsg');
+        err.style.display = 'block';
+        document.getElementById('gatePassInput').value = '';
+        document.getElementById('gatePassInput').focus();
+      }
+    }
+
+    function relockScreen() {
+      sessionStorage.removeItem('tizen_gate_open');
+      document.getElementById('gatePassInput').value = '';
+      document.getElementById('gateErrorMsg').style.display = 'none';
+      document.getElementById('lockOverlay').style.display = 'flex';
+      document.getElementById('gatePassInput').focus();
+    }
+
+    // Auto-déverrouillage uniquement pendant la session active si déjà validé
+    if (sessionStorage.getItem('tizen_gate_open') === '1') {
+      document.getElementById('lockOverlay').style.display = 'none';
+    } else {
+      document.getElementById('lockOverlay').style.display = 'flex';
+    }
+
+    // Polyfills Tizen
     function pad2(n) { return (n < 10 ? '0' : '') + n; }
     function formatDateKey(date) {
       return date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate());
@@ -645,12 +784,13 @@
 
     var dayLabels = ["Di", "L", "Ma", "Me", "J", "V", "S"];
 
-    // Données des équipements du territoire
+    // Données des équipements avec numéros de téléphone officiels
     var defaultVenues = [
       {
         id: "caillaux",
         name: "Gymnase Caillaux",
         address: "3 rue Caillaux, 75013 Paris",
+        phone: "01 45 85 41 82",
         metro: "Maison Blanche (Ligne 7 / 14)",
         type: "Salle multisports • Escrime • Sports collectifs",
         events: [
@@ -663,6 +803,7 @@
         id: "bourneville",
         name: "Gymnase Docteur Bourneville - Kellermann",
         address: "5 boulevard Kellermann, 75013 Paris",
+        phone: "01 45 80 50 14",
         metro: "Porte d'Italie (L7 / T3a)",
         type: "Gymnase omnisports • Plateau d'évolution",
         events: [
@@ -674,6 +815,7 @@
         id: "poterne",
         name: "Stade de la Poterne des Peupliers",
         address: "1-2 rue Max Jacob, 75013 Paris",
+        phone: "01 45 88 56 62",
         metro: "Poterne des Peupliers (T3a)",
         type: "Terrain de grand jeu (football) • Aires de cross • Piste",
         events: [
@@ -685,6 +827,7 @@
         id: "kellermann",
         name: "Gymnase Kellermann",
         address: "110 boulevard Kellermann, 75013 Paris",
+        phone: "01 45 80 20 88",
         metro: "Porte d'Italie / Porte de Choisy",
         type: "Salle polyvalente • Sports universitaires & scolaires",
         events: [
@@ -696,6 +839,7 @@
         id: "ferrandi",
         name: "TEP Marie & Jean-Dominique Ferrandi",
         address: "12 rue du Docteur Laurent, 75013 Paris",
+        phone: "01 45 83 31 16",
         metro: "Tolbiac / Maison Blanche",
         type: "Terrain d'éducation physique • Piste d'athlétisme",
         events: [
@@ -707,6 +851,7 @@
         id: "trenet",
         name: "TEP Charles Trenet",
         address: "13 rue Annie Girardot, 75013 Paris",
+        phone: "01 45 88 56 62",
         metro: "Cité Universitaire / Poterne des Peupliers",
         type: "City stade Petite Ceinture • Football à 5 • Basket",
         events: [
@@ -716,7 +861,7 @@
       }
     ];
 
-    // Données Moodboard fidèles aux notes de la cheffe
+    // Données Mémo et Suivi
     var defaultMemos = [
       {
         id: 1,
@@ -788,7 +933,6 @@
       }
     ];
 
-    // Données par défaut globales
     var defaultEvents = {
       "2026-11-09": "SAVPRO BAC / Poterne / Caillaux",
       "2026-11-10": "11h30 Seb. Donadien",
@@ -850,13 +994,12 @@
         highlight: "#38bdf8",
         holiday: "#ef4444",
         font: "'Plus Jakarta Sans', sans-serif"
-      },
-      password: "1234"
+      }
     };
 
     var appData = defaultData;
     try {
-      var stored = localStorage.getItem('agenda_vitrine_v5');
+      var stored = localStorage.getItem('agenda_vitrine_v7');
       if (stored) {
         var parsed = JSON.parse(stored);
         if (parsed) {
@@ -865,72 +1008,17 @@
           if (!appData.venues) appData.venues = defaultVenues;
           if (!appData.memos) appData.memos = defaultMemos;
           if (!appData.theme) appData.theme = defaultData.theme;
-          if (!appData.password) appData.password = "1234";
         }
       }
     } catch(e) { appData = defaultData; }
 
     function syncSave() {
-      try { localStorage.setItem('agenda_vitrine_v5', JSON.stringify(appData)); } catch(e) {}
+      try { localStorage.setItem('agenda_vitrine_v7', JSON.stringify(appData)); } catch(e) {}
       applyTheme();
       renderAll();
     }
 
-    // Gestion Mot de passe et verrouillage
-    var isUnlocked = false;
-    var pendingAuthCallback = null;
-
-    function toggleLock() {
-      if (isUnlocked) {
-        isUnlocked = false;
-        document.getElementById('lockBtn').innerText = "🔒 Verrouillé";
-        document.getElementById('lockBtn').style.background = "#1e293b";
-      } else {
-        reqAuth(function(){});
-      }
-    }
-
-    function reqAuth(callback) {
-      if (isUnlocked) {
-        if (callback) callback();
-      } else {
-        pendingAuthCallback = callback;
-        document.getElementById('authPassInput').value = '';
-        document.getElementById('authModal').classList.add('active');
-        document.getElementById('authPassInput').focus();
-      }
-    }
-
-    function closeAuthModal() {
-      document.getElementById('authModal').classList.remove('active');
-      pendingAuthCallback = null;
-    }
-
-    function validateAuth() {
-      var input = document.getElementById('authPassInput').value;
-      if (input === appData.password) {
-        isUnlocked = true;
-        document.getElementById('lockBtn').innerText = "🔓 Déverrouillé";
-        document.getElementById('lockBtn').style.background = "#059669";
-        closeAuthModal();
-        if (pendingAuthCallback) pendingAuthCallback();
-      } else {
-        alert("Mot de passe incorrect.");
-      }
-    }
-
-    function changePassword() {
-      reqAuth(function(){
-        var p = document.getElementById('newPassInput').value.trim();
-        if (!p) return alert("Veuillez saisir un mot de passe.");
-        appData.password = p;
-        syncSave();
-        document.getElementById('newPassInput').value = '';
-        alert("Nouveau mot de passe enregistré avec succès !");
-      });
-    }
-
-    // Navigation onglets
+    // Onglets
     function switchTab(tabName) {
       var tabs = ['agenda', 'territoire', 'moodboard', 'parametres'];
       for (var i = 0; i < tabs.length; i++) {
@@ -946,7 +1034,7 @@
       event.currentTarget.classList.add('active');
     }
 
-    // Thème & Couleurs
+    // Couleurs & Thème
     function applyTheme() {
       var t = appData.theme || defaultData.theme;
       var root = document.documentElement;
@@ -971,27 +1059,23 @@
     }
 
     function updateTheme() {
-      reqAuth(function(){
-        appData.theme = {
-          bg: document.getElementById('pickerBg').value,
-          text: document.getElementById('pickerText').value,
-          accent: document.getElementById('pickerAccent').value,
-          highlight: document.getElementById('pickerHighlight').value,
-          holiday: document.getElementById('pickerHoliday').value,
-          font: document.getElementById('fontSelect').value
-        };
-        syncSave();
-      });
+      appData.theme = {
+        bg: document.getElementById('pickerBg').value,
+        text: document.getElementById('pickerText').value,
+        accent: document.getElementById('pickerAccent').value,
+        highlight: document.getElementById('pickerHighlight').value,
+        holiday: document.getElementById('pickerHoliday').value,
+        font: document.getElementById('fontSelect').value
+      };
+      syncSave();
     }
 
     function resetDefaultColors() {
-      reqAuth(function(){
-        appData.theme = defaultData.theme;
-        syncSave();
-      });
+      appData.theme = defaultData.theme;
+      syncSave();
     }
 
-    // Calcul des jours fériés
+    // Fériés
     function getFrenchHoliday(date) {
       var d = date.getDate();
       var m = date.getMonth() + 1;
@@ -1026,7 +1110,6 @@
       return null;
     }
 
-    // Rendu global
     function renderAll() {
       renderAgenda();
       renderTerritory();
@@ -1034,42 +1117,42 @@
     }
 
     function renderAgenda() {
-      // 1. Rappels
+      // Rappels
       var urgentEl = document.getElementById('urgentList');
       if (urgentEl) {
         var uHtml = '';
         var uList = appData.urgents || [];
         for (var i = 0; i < uList.length; i++) {
-          uHtml += '<div class="urgent-row"><span>• ' + uList[i] + '</span><div class="actions-btn"><button onclick="reqAuth(function(){ editUrgent(' + i + '); })" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="reqAuth(function(){ deleteUrgent(' + i + '); })" class="danger" style="padding:2px 6px;">✕</button></div></div>';
+          uHtml += '<div class="urgent-row"><span>• ' + uList[i] + '</span><div class="actions-btn"><button onclick="editUrgent(' + i + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteUrgent(' + i + ')" class="danger" style="padding:2px 6px;">✕</button></div></div>';
         }
         urgentEl.innerHTML = uHtml;
       }
 
-      // 2. Prêts
+      // Prêts
       var pretsEl = document.getElementById('pretsList');
       if (pretsEl) {
         var pHtml = '';
         var pList = appData.prets || [];
         for (var j = 0; j < pList.length; j++) {
           var p = pList[j];
-          pHtml += '<li class="item-row ' + p.type + '"><span><strong>' + p.text + '</strong> → ' + p.dest + '</span><div class="actions-btn"><button onclick="reqAuth(function(){ editPret(' + p.id + '); })" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="reqAuth(function(){ deleteItem(\'prets\', ' + p.id + '); })" class="danger" style="padding:2px 6px;">✕</button></div></li>';
+          pHtml += '<li class="item-row ' + p.type + '"><span><strong>' + p.text + '</strong> → ' + p.dest + '</span><div class="actions-btn"><button onclick="editPret(' + p.id + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteItem(\'prets\', ' + p.id + ')" class="danger" style="padding:2px 6px;">✕</button></div></li>';
         }
         pretsEl.innerHTML = pHtml;
       }
 
-      // 3. RH
+      // RH
       var rhEl = document.getElementById('rhList');
       if (rhEl) {
         var rHtml = '';
         var rList = appData.rh || [];
         for (var k = 0; k < rList.length; k++) {
           var r = rList[k];
-          rHtml += '<li class="item-row ' + r.type + '"><span><strong>' + r.text + '</strong> : ' + r.detail + '</span><div class="actions-btn"><button onclick="reqAuth(function(){ editRH(' + r.id + '); })" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="reqAuth(function(){ deleteItem(\'rh\', ' + r.id + '); })" class="danger" style="padding:2px 6px;">✕</button></div></li>';
+          rHtml += '<li class="item-row ' + r.type + '"><span><strong>' + r.text + '</strong> : ' + r.detail + '</span><div class="actions-btn"><button onclick="editRH(' + r.id + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteItem(\'rh\', ' + r.id + ')" class="danger" style="padding:2px 6px;">✕</button></div></li>';
         }
         rhEl.innerHTML = rHtml;
       }
 
-      // 4. Commandes
+      // Commandes
       var cmdEl = document.getElementById('commandesList');
       var total = 0;
       if (cmdEl) {
@@ -1078,14 +1161,14 @@
         for (var l = 0; l < cList.length; l++) {
           var c = cList[l];
           total += (c.prix || 0);
-          cHtml += '<li class="item-row"><span>• ' + c.item + '</span><div style="display:flex; align-items:center; gap:6px;"><strong style="color: var(--accent-color)">' + (c.prix ? c.prix + ' €' : 'En devis') + '</strong><button onclick="reqAuth(function(){ editCommande(' + c.id + '); })" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="reqAuth(function(){ deleteItem(\'commandes\', ' + c.id + '); })" class="danger" style="padding:2px 6px;">✕</button></div></li>';
+          cHtml += '<li class="item-row"><span>• ' + c.item + '</span><div style="display:flex; align-items:center; gap:6px;"><strong style="color: var(--accent-color)">' + (c.prix ? c.prix + ' €' : 'En devis') + '</strong><button onclick="editCommande(' + c.id + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteItem(\'commandes\', ' + c.id + ')" class="danger" style="padding:2px 6px;">✕</button></div></li>';
         }
         cmdEl.innerHTML = cHtml;
       }
       var totalEl = document.getElementById('totalCommandes');
       if (totalEl) totalEl.innerText = 'Total : ' + total.toLocaleString('fr-FR') + ' €';
 
-      // 5. Calendrier dynamique
+      // Calendrier 35 jours
       var agendaEl = document.getElementById('agendaScroll');
       if (agendaEl) {
         var now = new Date();
@@ -1115,11 +1198,11 @@
 
           html += '<div class="' + rowClass + '">';
           html += '<div class="day-date">' + dayFormatted + (isToday ? ' ★' : '') + '</div>';
-          html += '<div class="day-content ' + (eventText ? '' : 'empty') + '" onclick="reqAuth(function(){ editDateEvent(\'' + key + '\', \'' + dayFormatted + '\'); })">' + (eventText || '—') + '</div>';
+          html += '<div class="day-content ' + (eventText ? '' : 'empty') + '" onclick="editDateEvent(\'' + key + '\', \'' + dayFormatted + '\')">' + (eventText || '—') + '</div>';
           html += '<div class="actions-btn">';
-          html += '<button onclick="reqAuth(function(){ editDateEvent(\'' + key + '\', \'' + dayFormatted + '\'); })" class="edit-btn" style="padding:2px 6px;">✎</button>';
+          html += '<button onclick="editDateEvent(\'' + key + '\', \'' + dayFormatted + '\')" class="edit-btn" style="padding:2px 6px;">✎</button>';
           if (eventText) {
-            html += '<button onclick="reqAuth(function(){ deleteDateEvent(\'' + key + '\'); })" class="danger" style="padding:2px 6px;">✕</button>';
+            html += '<button onclick="deleteDateEvent(\'' + key + '\')" class="danger" style="padding:2px 6px;">✕</button>';
           }
           html += '</div></div>';
         }
@@ -1127,7 +1210,6 @@
       }
     }
 
-    // Rendu Territoire
     function renderTerritory() {
       var cont = document.getElementById('territoryContainer');
       if (!cont) return;
@@ -1139,14 +1221,14 @@
         html += '<div class="venue-card">';
         html += '<div class="venue-header">';
         html += '<div><div class="venue-name">' + v.name + '</div>';
-        html += '<div class="venue-meta" style="margin-top:4px;">📍 <strong>' + v.address + '</strong> • 🚇 ' + v.metro + '</div></div>';
+        html += '<div class="venue-meta" style="margin-top:4px;">📍 <strong>' + v.address + '</strong> • 🚇 ' + v.metro + '<br><span class="venue-phone-badge">📞 ' + (v.phone || 'Non renseigné') + '</span></div></div>';
         html += '<span class="venue-badge">' + v.type + '</span>';
         html += '</div>';
 
         html += '<div class="venue-events-box">';
         html += '<div class="venue-events-title">';
         html += '<span>Événements & Consignes du site</span>';
-        html += '<button onclick="reqAuth(function(){ addVenueEvent(\'' + v.id + '\'); })" style="padding:2px 8px; font-size:0.7rem;">+ Événement</button>';
+        html += '<button onclick="addVenueEvent(\'' + v.id + '\')" style="padding:2px 8px; font-size:0.7rem;">+ Événement</button>';
         html += '</div>';
 
         var evs = v.events || [];
@@ -1157,8 +1239,8 @@
             html += '<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:5px 8px; border-radius:6px; font-size:0.82rem;">';
             html += '<span>• ' + evs[j] + '</span>';
             html += '<div class="actions-btn">';
-            html += '<button onclick="reqAuth(function(){ editVenueEvent(\'' + v.id + '\', ' + j + '); })" class="edit-btn" style="padding:1px 5px; font-size:0.65rem;">✎</button>';
-            html += '<button onclick="reqAuth(function(){ deleteVenueEvent(\'' + v.id + '\', ' + j + '); })" class="danger" style="padding:1px 5px; font-size:0.65rem;">✕</button>';
+            html += '<button onclick="editVenueEvent(\'' + v.id + '\', ' + j + ')" class="edit-btn" style="padding:1px 5px; font-size:0.65rem;">✎</button>';
+            html += '<button onclick="deleteVenueEvent(\'' + v.id + '\', ' + j + ')" class="danger" style="padding:1px 5px; font-size:0.65rem;">✕</button>';
             html += '</div></div>';
           }
         }
@@ -1167,7 +1249,6 @@
       cont.innerHTML = html;
     }
 
-    // Rendu Moodboard Cheffe
     function renderMoodboard() {
       var cont = document.getElementById('moodboardContainer');
       if (!cont) return;
@@ -1176,8 +1257,8 @@
 
       for (var i = 0; i < memos.length; i++) {
         var m = memos[i];
-        html += '<div class="memo-card highlight">';
-        html += '<div class="memo-title-box" onclick="reqAuth(function(){ editMemoTitle(' + m.id + '); })">';
+        html += '<div class="memo-card">';
+        html += '<div class="memo-title-box" onclick="editMemoTitle(' + m.id + ')">';
         html += '<div class="memo-title ' + (m.colorClass || '') + '">' + m.title + '</div>';
         html += '<span style="font-size:0.75rem; color:#64748b;">✎ Titre</span>';
         html += '</div>';
@@ -1187,16 +1268,16 @@
         for (var j = 0; j < lines.length; j++) {
           var ln = lines[j];
           html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
-          html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="reqAuth(function(){ toggleMemoLine(' + m.id + ', ' + j + '); })" style="cursor:pointer;">';
-          html += '<span class="memo-line-text" onclick="reqAuth(function(){ editMemoLineText(' + m.id + ', ' + j + '); })">' + ln.text + '</span>';
-          html += '<button onclick="reqAuth(function(){ deleteMemoLine(' + m.id + ', ' + j + '); })" class="danger" style="padding:1px 5px; font-size:0.65rem;">✕</button>';
+          html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleMemoLine(' + m.id + ', ' + j + ')" style="cursor:pointer;">';
+          html += '<span class="memo-line-text" onclick="editMemoLineText(' + m.id + ', ' + j + ')">' + ln.text + '</span>';
+          html += '<button onclick="deleteMemoLine(' + m.id + ', ' + j + ')" class="danger" style="padding:1px 5px; font-size:0.65rem;">✕</button>';
           html += '</div>';
         }
         html += '</div>';
 
         html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">';
-        html += '<button onclick="reqAuth(function(){ addMemoLine(' + m.id + '); })" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
-        html += '<button onclick="reqAuth(function(){ deleteMemoCard(' + m.id + '); })" class="danger" style="padding:3px 6px; font-size:0.7rem;">Supprimer bloc</button>';
+        html += '<button onclick="addMemoLine(' + m.id + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
+        html += '<button onclick="deleteMemoCard(' + m.id + ')" class="danger" style="padding:3px 6px; font-size:0.7rem;">Supprimer bloc</button>';
         html += '</div>';
 
         html += '</div>';
@@ -1204,7 +1285,6 @@
       cont.innerHTML = html;
     }
 
-    // Fonctions d'édition
     function editDateEvent(dateKey, label) {
       document.getElementById('entryType').value = 'calendar_day';
       document.getElementById('entryKey').value = dateKey;
@@ -1301,7 +1381,6 @@
       syncSave();
     }
 
-    // Gestion Événements Territoire
     function addVenueEvent(venueId) {
       document.getElementById('entryType').value = 'venue_event';
       document.getElementById('entryKey').value = venueId;
@@ -1332,9 +1411,8 @@
       }
     }
 
-    // Gestion Moodboard Cheffe
     function addNewMemoCard() {
-      var title = prompt("Titre du nouveau bloc mémo (ex: CONGÉS À VALIDER) :");
+      var title = prompt("Titre du nouveau bloc mémo :");
       if (!title) return;
       var newCard = {
         id: Date.now(),
@@ -1463,7 +1541,6 @@
       closeModal();
     }
 
-    // Horloge
     function updateClock() {
       var now = new Date();
       document.getElementById('liveClock').innerText = now.toLocaleTimeString('fr-FR');
@@ -1473,12 +1550,11 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Export & Import
     function exportData() {
       var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
       var dl = document.createElement('a');
       dl.setAttribute("href", dataStr);
-      dl.setAttribute("download", "agenda_direction_complet.json");
+      dl.setAttribute("download", "agenda_maison_blanche.json");
       dl.click();
     }
 
@@ -1497,16 +1573,13 @@
     }
 
     function forceResetCalendar() {
-      reqAuth(function(){
-        if (confirm("Réinitialiser toutes les données par défaut ?")) {
-          try { localStorage.removeItem('agenda_vitrine_v5'); } catch(e) {}
-          appData = defaultData;
-          syncSave();
-        }
-      });
+      if (confirm("Réinitialiser toutes les données par défaut ?")) {
+        try { localStorage.removeItem('agenda_vitrine_v7'); } catch(e) {}
+        appData = defaultData;
+        syncSave();
+      }
     }
 
-    // Initialisation
     applyTheme();
     renderAll();
   </script>
