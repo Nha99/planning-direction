@@ -3,17 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agenda & Opérations - Vitrine</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <title>Agenda & Direction - Écran Vitrine</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+  <!-- Firebase SDKs pour la synchronisation en direct -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: rgba(18, 26, 43, 0.75);
+      --bg: #070a11;
+      --card-bg: rgba(15, 23, 42, 0.85);
       --card-border: rgba(255, 255, 255, 0.08);
-      --text: #f1f5f9;
+      --text: #f8fafc;
       --text-dim: #94a3b8;
       --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.25);
+      --accent-glow: rgba(56, 189, 248, 0.3);
       --alert: #ef4444;
       --warning: #f59e0b;
       --success: #10b981;
@@ -30,64 +33,70 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      padding: 14px;
+      gap: 12px;
       overflow-x: hidden;
-      padding: 16px;
-      gap: 14px;
     }
 
     header {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 14px 20px;
+      border-radius: 16px;
+      padding: 12px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       backdrop-filter: blur(12px);
     }
     .brand { display: flex; align-items: center; gap: 12px; }
-    .badge-live {
-      background: rgba(16, 185, 129, 0.2);
-      color: #34d399;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      animation: pulse 2s infinite;
-    }
+    
     .clock {
       font-family: 'JetBrains Mono', monospace;
       font-size: 1.6rem;
-      font-weight: 700;
-      color: #38bdf8;
-      letter-spacing: 0.05em;
+      font-weight: 800;
+      color: var(--accent);
       text-align: right;
+      letter-spacing: 0.05em;
     }
-    .date-str { font-size: 0.8rem; color: var(--text-dim); text-transform: capitalize; }
+    .date-str { font-size: 0.82rem; color: var(--text-dim); text-transform: capitalize; }
 
+    /* Rappels importants modifiables */
     .urgent-banner {
-      background: linear-gradient(90deg, rgba(239, 68, 68, 0.2), rgba(245, 158, 11, 0.15));
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.18), rgba(245, 158, 11, 0.12));
       border: 1px solid rgba(239, 68, 68, 0.4);
       border-radius: 14px;
       padding: 12px 16px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
+    }
+    .urgent-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .urgent-title {
       color: #f87171;
       font-weight: 800;
       font-size: 0.85rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       display: flex;
       align-items: center;
       gap: 6px;
     }
-    .urgent-content { font-size: 0.9rem; line-height: 1.4; color: #fecaca; }
+    .urgent-items { display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; }
+    .urgent-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0,0,0,0.25);
+      padding: 6px 10px;
+      border-radius: 8px;
+      color: #fecaca;
+    }
 
+    /* Grille supérieure */
     .grid-top {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -97,7 +106,7 @@
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 14px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -120,65 +129,139 @@
       align-items: center;
       gap: 6px;
     }
-    .card-title span.icon { color: var(--accent); }
 
-    .item-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .item-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
     .item-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 10px;
+      padding: 7px 10px;
       background: rgba(255, 255, 255, 0.03);
-      border-radius: 10px;
-      font-size: 0.85rem;
+      border-radius: 8px;
+      font-size: 0.84rem;
       border-left: 3px solid transparent;
+      gap: 8px;
     }
-    .item-row.tech { border-left-color: #38bdf8; }
-    .item-row.rh { border-left-color: #a855f7; }
-    .item-row.alert { border-left-color: #ef4444; }
-    .item-row.warn { border-left-color: #f59e0b; }
+    .item-row.tech { border-left-color: var(--accent); }
+    .item-row.rh { border-left-color: var(--purple); }
+    .item-row.alert { border-left-color: var(--alert); }
+    .item-row.warn { border-left-color: var(--warning); }
 
-    .agenda-section { flex: 1; display: flex; flex-direction: column; }
-    .agenda-table {
+    /* Zone Agenda Redimensionnable */
+    .agenda-resizable-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      max-height: 520px;
-      overflow-y: auto;
-      padding-right: 4px;
+      gap: 10px;
+      resize: vertical;
+      overflow: hidden;
+      min-height: 280px;
+      height: 520px;
+      max-height: 85vh;
+      position: relative;
     }
-    .agenda-row {
+    .agenda-scroll-container {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding-right: 6px;
+    }
+    .agenda-scroll-container::-webkit-scrollbar { width: 6px; }
+    .agenda-scroll-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+    .day-row {
       display: grid;
-      grid-template-columns: 110px 1fr auto;
+      grid-template-columns: 120px 1fr auto;
       align-items: center;
       gap: 12px;
-      padding: 9px 12px;
+      padding: 8px 12px;
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.02);
-      font-size: 0.85rem;
+      border: 1px solid transparent;
+      font-size: 0.88rem;
       transition: all 0.2s;
     }
-    .agenda-row.today {
-      background: rgba(56, 189, 248, 0.15);
-      border: 1px solid rgba(56, 189, 248, 0.5);
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
-    }
-    .agenda-date { font-weight: 700; color: #cbd5e1; }
-    .agenda-row.today .agenda-date { color: #38bdf8; font-weight: 800; }
-    .tag {
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 6px;
-      text-transform: uppercase;
-    }
-    .tag.ferie { background: rgba(239, 68, 68, 0.25); color: #f87171; }
-    .tag.reunion { background: rgba(245, 158, 11, 0.25); color: #fbbf24; }
-    .tag.tech { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
-    .tag.rh { background: rgba(168, 85, 247, 0.25); color: #c084fc; }
+    .day-row:hover { background: rgba(255, 255, 255, 0.04); }
 
+    /* Week-end */
+    .day-row.weekend {
+      background: rgba(255, 255, 255, 0.01);
+      opacity: 0.85;
+    }
+    .day-row.weekend .day-date {
+      color: #94a3b8;
+    }
+
+    /* Surlignage Jour J */
+    .day-row.today {
+      background: rgba(56, 189, 248, 0.16);
+      border: 1.5px solid #38bdf8;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+      opacity: 1;
+    }
+    .day-row.today .day-date {
+      color: #38bdf8;
+      font-weight: 800;
+    }
+
+    /* Férié en Rouge */
+    .day-row.ferie {
+      background: rgba(239, 68, 68, 0.14);
+      border-left: 4px solid #ef4444;
+      opacity: 1;
+    }
+    .day-row.ferie .day-date {
+      color: #f87171;
+      font-weight: 800;
+    }
+    .day-row.ferie .day-content {
+      color: #fca5a5;
+      font-weight: 600;
+    }
+
+    .day-date {
+      font-weight: 700;
+      color: #cbd5e1;
+      font-size: 0.85rem;
+    }
+    .day-content {
+      flex: 1;
+      color: #f1f5f9;
+      cursor: pointer;
+      min-height: 1.2em;
+    }
+    .day-content.empty {
+      color: #475569;
+      font-style: italic;
+    }
+    .day-content:hover { text-decoration: underline dotted; }
+
+    .actions-btn { display: flex; align-items: center; gap: 6px; }
+    button {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.78rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #334155; }
+    button.primary { background: #0284c7; border-color: #38bdf8; }
+    button.primary:hover { background: #0369a1; }
+    button.danger { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
+    button.danger:hover { background: #dc2626; color: white; }
+    button.edit-btn { background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.3); color: #38bdf8; }
+
+    /* Barre basse */
     .admin-bar {
-      margin-top: auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -186,30 +269,19 @@
       background: rgba(15, 23, 42, 0.9);
       border-radius: 14px;
       border: 1px solid var(--card-border);
+      margin-top: auto;
     }
-    button {
-      background: #1e293b;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: white;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.8rem;
-    }
-    button.primary { background: #0284c7; border-color: #38bdf8; }
-    button.danger { background: #991b1b; }
 
-    /* Modal */
+    /* Modale */
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(0, 0, 0, 0.8);
       align-items: center;
       justify-content: center;
-      z-index: 100;
-      padding: 20px;
+      z-index: 1000;
+      padding: 16px;
     }
     .modal.active { display: flex; }
     .modal-card {
@@ -218,12 +290,12 @@
       border-radius: 16px;
       padding: 20px;
       width: 100%;
-      max-width: 500px;
+      max-width: 480px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
-    input, select, textarea {
+    input, textarea, select {
       width: 100%;
       padding: 10px;
       background: #1e293b;
@@ -232,7 +304,6 @@
       border-radius: 8px;
       font-size: 0.9rem;
     }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
   </style>
 </head>
 <body>
@@ -240,95 +311,181 @@
   <header>
     <div class="brand">
       <div>
-        <div style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.05em;">DIRECTION JEUNESSE & SPORTS</div>
-        <div style="font-size: 0.78rem; color: #94a3b8;">Exploitation Technique • Tableau de Bord Quotidien</div>
+        <div style="font-weight: 800; font-size: 1.05rem; letter-spacing: 0.05em;">DIRECTION JEUNESSE & SPORTS</div>
+        <div style="font-size: 0.76rem; color: #94a3b8;">Exploitation Technique • Tableau de Bord Quotidien</div>
       </div>
-      <div class="badge-live">AUTONOME</div>
     </div>
     <div>
-      <div class="clock" id="liveClock">12:00:00</div>
-      <div class="date-str" id="liveDate">Mardi 10 Novembre 2026</div>
+      <div class="clock" id="liveClock">--:--:--</div>
+      <div class="date-str" id="liveDate">Chargement...</div>
     </div>
   </header>
 
-  <!-- Bloc Alertes Urgentes -->
+  <!-- Bloc Rappels Importants (Modifiable & Ajoutable) -->
   <div class="urgent-banner">
-    <div class="urgent-title">⚠️ RAPPELS IMPORTANTS & ÉCHÉANCES</div>
-    <div class="urgent-content">
-      • <strong>Rendre 6 BRDT</strong> avant le 15/01 (Période chargée 28/12 au 15/01 + Télécommandes)<br>
-      • <strong>Fermetures :</strong> Caillaux fermé (20/12 → 3/01) | Travaux Bourneville (21/12 → 3/01)<br>
-      • <strong>SST :</strong> Kellermann 4e 5h / Caillaux 2e 5h
+    <div class="urgent-header">
+      <div class="urgent-title">⚠️ RAPPELS IMPORTANTS & ÉCHÉANCES</div>
+      <button onclick="openUrgentModal()" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajouter un rappel</button>
     </div>
+    <div class="urgent-items" id="urgentList"></div>
   </div>
 
   <!-- Prêts & RH -->
   <div class="grid-top">
     <div class="card">
       <div class="card-header">
-        <div class="card-title"><span class="icon">🔄</span> Prêts de matériel</div>
-        <button onclick="openModal('pret')" style="padding: 2px 8px; font-size: 0.7rem;">+ Ajout</button>
+        <div class="card-title">🔄 Prêts de matériel</div>
+        <button onclick="openModal('pret')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
       </div>
       <ul class="item-list" id="pretsList"></ul>
     </div>
 
     <div class="card">
       <div class="card-header">
-        <div class="card-title"><span class="icon">👥</span> RH & Alertes Maladie</div>
-        <button onclick="openModal('rh')" style="padding: 2px 8px; font-size: 0.7rem;">+ Ajout</button>
+        <div class="card-title">👥 RH & Alertes</div>
+        <button onclick="openModal('rh')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
       </div>
       <ul class="item-list" id="rhList"></ul>
     </div>
   </div>
 
-  <!-- Agenda -->
-  <div class="card agenda-section">
+  <!-- ZONE AGENDA DYNAMIQUE REDIMENSIONNABLE -->
+  <div class="agenda-resizable-box" id="agendaBox">
     <div class="card-header">
-      <div class="card-title"><span class="icon">📅</span> Agenda Prévisionnel des Interventions</div>
-      <div style="display: flex; gap: 6px;">
-        <button onclick="openModal('agenda')" class="primary" style="padding: 3px 10px; font-size: 0.75rem;">+ Événement</button>
-      </div>
+      <div class="card-title">📅 Agenda Prévisionnel</div>
+      <div style="font-size: 0.75rem; color: #94a3b8;">Clique sur un jour pour ajouter ou modifier</div>
     </div>
-    <div class="agenda-table" id="agendaList"></div>
+    
+    <div class="agenda-scroll-container" id="agendaScroll">
+      <!-- Généré dynamiquement jour par jour avec week-ends -->
+    </div>
   </div>
 
   <!-- Commandes & Achats -->
   <div class="card">
     <div class="card-header">
-      <div class="card-title"><span class="icon">📦</span> Commandes & Devis en cours</div>
-      <div style="font-size: 0.8rem; font-weight: 700; color: #38bdf8;" id="totalCommandes">Total: -- €</div>
+      <div class="card-title">📦 Commandes & Devis</div>
+      <div style="font-size: 0.8rem; font-weight: 700; color: #38bdf8;" id="totalCommandes">Total : 0 €</div>
+      <button onclick="openModal('commande')" style="padding: 3px 8px; font-size: 0.72rem;">+ Commande</button>
     </div>
     <ul class="item-list" id="commandesList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></ul>
   </div>
 
   <!-- Barre administration basse -->
   <div class="admin-bar">
-    <div style="font-size: 0.75rem; color: #94a3b8;">Samsung QM43R • Mode URL Autonome</div>
+    <div style="font-size: 0.75rem; color: #94a3b8;">
+      Samsung QM43R • Agenda Perpétuel
+    </div>
     <div style="display: flex; gap: 8px;">
+      <button onclick="openConfigFirebase()">⚙️ Config Synchro Partagée</button>
       <button onclick="exportData()">💾 Exporter JSON</button>
       <button onclick="document.getElementById('importFile').click()">📂 Importer JSON</button>
       <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-      <button onclick="resetDefaults()" class="danger" style="font-size: 0.7rem;">Reset</button>
     </div>
   </div>
 
-  <!-- Modal Formulaire -->
-  <div class="modal" id="formModal">
+  <!-- Modal Édition / Ajout -->
+  <div class="modal" id="editModal">
     <div class="modal-card">
-      <h3 id="modalTitle" style="font-size: 1rem;">Ajouter un élément</h3>
+      <h3 id="modalTitle">Modifier</h3>
       <input type="hidden" id="entryType">
-      <input type="text" id="input1" placeholder="Titre / Date (ex: J 19/11)">
-      <input type="text" id="input2" placeholder="Description / Objet">
-      <input type="text" id="input3" placeholder="Tag ou Montant (ex: 620€ / Technique)">
-      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+      <input type="hidden" id="entryKey">
+      <input type="text" id="modalInput1" placeholder="Texte principal / Date">
+      <input type="text" id="modalInput2" placeholder="Détail / Montant">
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
         <button onclick="closeModal()">Annuler</button>
-        <button onclick="saveEntry()" class="primary">Enregistrer</button>
+        <button onclick="saveModalData()" class="primary">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Synchro Cloud Firebase -->
+  <div class="modal" id="firebaseModal">
+    <div class="modal-card">
+      <h3>Synchronisation avec ta Cheffe (Gratuit)</h3>
+      <p style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4;">
+        Pour que les modifications faites depuis un téléphone ou un autre PC s'affichent instantanément sur l'écran vitrine, colle ici le JSON de configuration Firebase Realtime Database.
+      </p>
+      <textarea id="firebaseConfigJson" rows="6" placeholder='Colle ici le JSON firebaseConfig...'></textarea>
+      <div style="display: flex; justify-content: space-between; align-items:center; margin-top: 8px;">
+        <button onclick="disableCloud()" class="danger">Désactiver Cloud</button>
+        <div style="display:flex; gap:8px;">
+          <button onclick="closeFirebaseModal()">Fermer</button>
+          <button onclick="saveFirebaseConfig()" class="primary">Activer Synchro</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // Initial data from the whiteboard
+    // Événements indexés par clé ISO YYYY-MM-DD
+    const initialEvents = {
+      "2026-11-09": "SAVPRO BAC / Poterne / Caillaux",
+      "2026-11-10": "11h30 Seb. Donadien",
+      "2026-11-11": "Armistice (Férié)",
+      "2026-11-12": "Lora T / 14h Médaille HV, reprise Alex",
+      "2026-11-13": "Repas Amélie / Priscilla",
+      "2026-11-16": "Oral Ongy",
+      "2026-11-17": "Disciplinaire Le Hir 10h / 13h Form Lora",
+      "2026-11-18": "Suivi exploitation bassin",
+      "2026-11-19": "11h Encombrants Caillaux",
+      "2026-11-20": "14h Visite TEP Ferrandi | Dialogue de Gestion",
+      "2026-11-23": "Interventions programmées",
+      "2026-11-24": "Réouverture BD",
+      "2026-11-25": "TRM Lora",
+      "2026-11-26": "Maintenance curative",
+      "2026-11-27": "Bilan fin de semaine",
+      "2026-11-30": "Relevé compteurs et réactifs",
+      "2026-12-01": "Entretien préventif",
+      "2026-12-02": "Planification coordination",
+      "2026-12-03": "Point travaux piscine",
+      "2026-12-04": "Audit sécurité installations"
+    };
+
+    // Jours fériés français officiels (fixes et mobiles)
+    function isFrenchPublicHoliday(date) {
+      const d = date.getDate();
+      const m = date.getMonth() + 1;
+      const y = date.getFullYear();
+
+      // Fixes
+      if (d === 1 && m === 1) return "Jour de l'An";
+      if (d === 1 && m === 5) return "Fête du Travail";
+      if (d === 8 && m === 5) return "Victoire 1945";
+      if (d === 14 && m === 7) return "Fête Nationale";
+      if (d === 15 && m === 8) return "Assomption";
+      if (d === 1 && m === 11) return "Toussaint";
+      if (d === 11 && m === 11) return "Armistice 1918";
+      if (d === 25 && m === 12) return "Noël";
+
+      // Mobiles (Pâques, Ascension, Pentecôte)
+      const a = y % 19, b = Math.floor(y / 100), c = y % 100;
+      const dd = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+      const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - dd - g + 15) % 30;
+      const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+      const mm = Math.floor((a + 11 * h + 22 * l) / 451);
+      const easterMonth = Math.floor((h + l - 7 * mm + 114) / 31);
+      const easterDay = ((h + l - 7 * mm + 114) % 31) + 1;
+      const easter = new Date(y, easterMonth - 1, easterDay);
+
+      const lPaques = new Date(easter); lPaques.setDate(easter.getDate() + 1);
+      const asc = new Date(easter); asc.setDate(easter.getDate() + 39);
+      const lPent = new Date(easter); lPent.setDate(easter.getDate() + 50);
+
+      const check = (dt) => dt.getDate() === d && (dt.getMonth() + 1) === m;
+      if (check(lPaques)) return "Lundi de Pâques";
+      if (check(asc)) return "Ascension";
+      if (check(lPent)) return "Lundi de Pentecôte";
+
+      return null;
+    }
+
     const defaultData = {
+      urgents: [
+        "Rendre 6 BRDT avant le 15/01 (Période chargée 28/12 au 15/01 + Télécommandes)",
+        "Fermetures : Caillaux fermé (20/12 → 3/01) | Travaux Bourneville (21/12 → 3/01)",
+        "SST : Kellermann 4e 5h / Caillaux 2e 5h"
+      ],
       prets: [
         { id: 1, text: "Ligne d'eau", dest: "CDR", type: "tech" },
         { id: 2, text: "Talky-walkies", dest: "Taris", type: "tech" }
@@ -351,157 +508,313 @@
         { id: 7, item: "Panneaux déco", prix: 1100 },
         { id: 8, item: "Table à langer", prix: 0 }
       ],
-      agenda: [
-        { id: 1, date: "L 9/11", label: "SAVPRO BAC / Poterne / Caillaux", tag: "tech", tagText: "Technique" },
-        { id: 2, date: "Ma 10/11", label: "11h30 Seb. Donadien", tag: "reunion", tagText: "RDV" },
-        { id: 3, date: "Me 11/11", label: "Armistice (Férié)", tag: "ferie", tagText: "Férié" },
-        { id: 4, date: "J 12/11", label: "Lora T / 14h Médaille HV, reprise Alex", tag: "rh", tagText: "RH" },
-        { id: 5, date: "V 13/11", label: "Repas Amélie / Priscilla", tag: "reunion", tagText: "Équipe" },
-        { id: 6, date: "L 16/11", label: "Oral Ongy", tag: "rh", tagText: "Examen" },
-        { id: 7, date: "Ma 17/11", label: "Disciplinaire Le Hir 10h / 13h Form Lora", tag: "rh", tagText: "Admin" },
-        { id: 8, date: "Me 18/11", label: "Suivi exploitation", tag: "tech", tagText: "Technique" },
-        { id: 9, date: "J 19/11", label: "11h Encombrants Caillaux", tag: "tech", tagText: "Intervention" },
-        { id: 10, date: "V 20/11", label: "14h Visite TEP Ferrandi | Dialogue de Gestion", tag: "reunion", tagText: "Direction" },
-        { id: 11, date: "L 23/11", label: "Interventions programmées", tag: "tech", tagText: "Exploitation" },
-        { id: 12, date: "Ma 24/11", label: "Réouverture BD", tag: "reunion", tagText: "Exploitation" },
-        { id: 13, date: "Me 25/11", label: "TRM Lora", tag: "rh", tagText: "Formation" },
-        { id: 14, date: "Je 26/11", label: "Maintenance curative", tag: "tech", tagText: "Technique" },
-        { id: 15, date: "V 27/11", label: "Bilan fin de semaine", tag: "reunion", tagText: "Suivi" },
-        { id: 16, date: "L 30/11", label: "Relevé compteurs et réactifs", tag: "tech", tagText: "Contrôle" },
-        { id: 17, date: "Ma 1/12", label: "Entretien préventif", tag: "tech", tagText: "Technique" },
-        { id: 18, date: "Me 2/12", label: "Planification hebdomadaire", tag: "reunion", tagText: "Coordination" },
-        { id: 19, date: "Je 3/12", label: "Point travaux piscine", tag: "tech", tagText: "Suivi" },
-        { id: 20, date: "V 4/12", label: "Audit sécurité installations", tag: "reunion", tagText: "Audit" }
-      ]
+      events: initialEvents
     };
 
-    let appData = JSON.parse(localStorage.getItem('agenda_vitrine_data')) || defaultData;
+    let appData = JSON.parse(localStorage.getItem('agenda_vitrine_v3')) || defaultData;
+    let cloudRef = null;
 
-    function saveAll() {
-      localStorage.setItem('agenda_vitrine_data', JSON.stringify(appData));
+    // Config Firebase si renseignée
+    const fbConfig = localStorage.getItem('agenda_fb_config');
+    if (fbConfig) {
+      try {
+        const config = JSON.parse(fbConfig);
+        firebase.initializeApp(config);
+        const db = firebase.database();
+        cloudRef = db.ref('vitrine_agenda_v3');
+        cloudRef.on('value', (snap) => {
+          const val = snap.val();
+          if (val) {
+            appData = val;
+            if (!appData.events) appData.events = {};
+            localStorage.setItem('agenda_vitrine_v3', JSON.stringify(appData));
+            render();
+          }
+        });
+      } catch(e) { console.error(e); }
+    }
+
+    function syncSave() {
+      localStorage.setItem('agenda_vitrine_v3', JSON.stringify(appData));
+      if (cloudRef) cloudRef.set(appData);
       render();
     }
 
+    const dayLabels = ["Di", "L", "Ma", "Me", "J", "V", "S"];
+
+    function formatDateKey(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
     function render() {
-      // Prets
-      document.getElementById('pretsList').innerHTML = appData.prets.map(p => `
+      // 1. Rappels urgents
+      document.getElementById('urgentList').innerHTML = (appData.urgents || []).map((item, idx) => `
+        <div class="urgent-row">
+          <span>• ${item}</span>
+          <div class="actions-btn">
+            <button onclick="editUrgent(${idx})" class="edit-btn" style="padding:2px 6px;">✎</button>
+            <button onclick="deleteUrgent(${idx})" class="danger" style="padding:2px 6px;">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      // 2. Prêts
+      document.getElementById('pretsList').innerHTML = (appData.prets || []).map(p => `
         <li class="item-row ${p.type}">
           <span><strong>${p.text}</strong> → ${p.dest}</span>
-          <button onclick="deleteItem('prets', ${p.id})" style="padding: 2px 6px; font-size: 0.65rem;" class="danger">✕</button>
+          <div class="actions-btn">
+            <button onclick="editPret(${p.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
+            <button onclick="deleteItem('prets', ${p.id})" class="danger" style="padding:2px 6px;">✕</button>
+          </div>
         </li>
       `).join('');
 
-      // RH
-      document.getElementById('rhList').innerHTML = appData.rh.map(r => `
+      // 3. RH
+      document.getElementById('rhList').innerHTML = (appData.rh || []).map(r => `
         <li class="item-row ${r.type}">
           <span><strong>${r.text}</strong> : ${r.detail}</span>
-          <button onclick="deleteItem('rh', ${r.id})" style="padding: 2px 6px; font-size: 0.65rem;" class="danger">✕</button>
+          <div class="actions-btn">
+            <button onclick="editRH(${r.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
+            <button onclick="deleteItem('rh', ${r.id})" class="danger" style="padding:2px 6px;">✕</button>
+          </div>
         </li>
       `).join('');
 
-      // Commandes
+      // 4. Commandes
       let total = 0;
-      document.getElementById('commandesList').innerHTML = appData.commandes.map(c => {
-        total += c.prix || 0;
+      document.getElementById('commandesList').innerHTML = (appData.commandes || []).map(c => {
+        total += (c.prix || 0);
         return `
           <li class="item-row">
             <span>• ${c.item}</span>
-            <span style="display:flex; align-items:center; gap:6px;">
+            <div style="display:flex; align-items:center; gap:6px;">
               <strong style="color: ${c.prix ? '#38bdf8' : '#94a3b8'}">${c.prix ? c.prix + ' €' : 'En devis'}</strong>
-              <button onclick="deleteItem('commandes', ${c.id})" style="padding: 2px 6px; font-size: 0.65rem;" class="danger">✕</button>
-            </span>
+              <button onclick="editCommande(${c.id})" class="edit-btn" style="padding:2px 6px;">✎</button>
+              <button onclick="deleteItem('commandes', ${c.id})" class="danger" style="padding:2px 6px;">✕</button>
+            </div>
           </li>
         `;
       }).join('');
       document.getElementById('totalCommandes').innerText = `Total : ${total.toLocaleString('fr-FR')} €`;
 
-      // Agenda
+      // 5. CALENDRIER DYNAMIQUE PERPÉTUEL (Hier + 35 jours à venir)
       const now = new Date();
-      const currentDay = now.getDate();
-      document.getElementById('agendaList').innerHTML = appData.agenda.map(a => {
-        const isToday = a.date.includes(`${currentDay}/`);
-        return `
-          <div class="agenda-row ${isToday ? 'today' : ''}">
-            <div class="agenda-date">${a.date} ${isToday ? '★' : ''}</div>
-            <div style="font-weight: 500;">${a.label}</div>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span class="tag ${a.tag}">${a.tagText}</span>
-              <button onclick="deleteItem('agenda', ${a.id})" style="padding: 2px 6px; font-size: 0.65rem;" class="danger">✕</button>
+      now.setHours(0,0,0,0);
+      const todayKey = formatDateKey(now);
+
+      const daysToDisplay = [];
+      const startDate = new Date(now);
+      startDate.setDate(now.getDate() - 1); // Affiche hier pour repère
+
+      for (let i = 0; i < 35; i++) {
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + i);
+        daysToDisplay.push(d);
+      }
+
+      let html = '';
+      daysToDisplay.forEach(curDate => {
+        const key = formatDateKey(curDate);
+        const dayOfWeek = curDate.getDay();
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        const isToday = (key === todayKey);
+        const holidayName = isFrenchPublicHoliday(curDate);
+        const isFerie = !!holidayName;
+
+        const dayName = dayLabels[dayOfWeek];
+        const dayFormatted = `${dayName} ${curDate.getDate()}/${curDate.getMonth() + 1}`;
+
+        let eventText = (appData.events && appData.events[key]) ? appData.events[key] : '';
+        if (isFerie && !eventText) {
+          eventText = `${holidayName} (Férié)`;
+        }
+
+        html += `
+          <div class="day-row ${isToday ? 'today' : ''} ${isFerie ? 'ferie' : ''} ${isWeekend ? 'weekend' : ''}">
+            <div class="day-date">${dayFormatted} ${isToday ? '★' : ''}</div>
+            <div class="day-content ${eventText ? '' : 'empty'}" onclick="editDateEvent('${key}', '${dayFormatted}')">
+              ${eventText || '—'}
+            </div>
+            <div class="actions-btn">
+              <button onclick="editDateEvent('${key}', '${dayFormatted}')" class="edit-btn" style="padding:2px 6px;">✎</button>
+              ${eventText ? `<button onclick="deleteDateEvent('${key}')" class="danger" style="padding:2px 6px;">✕</button>` : ''}
             </div>
           </div>
         `;
-      }).join('');
+      });
+
+      document.getElementById('agendaScroll').innerHTML = html;
     }
 
+    // Gestion calendrier dynamique
+    function editDateEvent(dateKey, label) {
+      document.getElementById('entryType').value = 'calendar_day';
+      document.getElementById('entryKey').value = dateKey;
+      document.getElementById('modalTitle').innerText = "Modifier la journée du " + label;
+      document.getElementById('modalInput1').value = (appData.events && appData.events[dateKey]) || '';
+      document.getElementById('modalInput1').placeholder = "Saisir l'événement / intervention...";
+      document.getElementById('modalInput2').style.display = 'none';
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function deleteDateEvent(dateKey) {
+      if (appData.events && appData.events[dateKey]) {
+        delete appData.events[dateKey];
+        syncSave();
+      }
+    }
+
+    // Gestion suppression autres items
     function deleteItem(cat, id) {
       appData[cat] = appData[cat].filter(x => x.id !== id);
-      saveAll();
+      syncSave();
+    }
+    function deleteUrgent(idx) {
+      appData.urgents.splice(idx, 1);
+      syncSave();
     }
 
+    // Modales Ajout / Edition
+    function openModal(type) {
+      document.getElementById('entryType').value = type;
+      document.getElementById('entryKey').value = '-1';
+      document.getElementById('modalInput1').style.display = 'block';
+      document.getElementById('modalInput2').style.display = 'block';
+
+      if (type === 'pret') {
+        document.getElementById('modalTitle').innerText = "Nouveau prêt";
+        document.getElementById('modalInput1').placeholder = "Matériel (ex: Clé pass, Pompe)";
+        document.getElementById('modalInput2').placeholder = "Destination / Collègue (ex: Taris)";
+      } else if (type === 'rh') {
+        document.getElementById('modalTitle').innerText = "Nouvelle alerte RH / Congé";
+        document.getElementById('modalInput1').placeholder = "Agent & Motif (ex: Congés Alex)";
+        document.getElementById('modalInput2').placeholder = "Dates (ex: 18/11 au 22/11)";
+      } else if (type === 'commande') {
+        document.getElementById('modalTitle').innerText = "Nouvelle commande";
+        document.getElementById('modalInput1').placeholder = "Désignation (ex: Doseur pH)";
+        document.getElementById('modalInput2').placeholder = "Prix en € (ex: 450, ou laisser vide)";
+      }
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function openUrgentModal() {
+      document.getElementById('entryType').value = 'urgent';
+      document.getElementById('entryKey').value = '-1';
+      document.getElementById('modalTitle').innerText = "Ajouter un rappel urgent";
+      document.getElementById('modalInput1').placeholder = "Texte du rappel...";
+      document.getElementById('modalInput2').style.display = 'none';
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function editUrgent(idx) {
+      document.getElementById('entryType').value = 'urgent';
+      document.getElementById('entryKey').value = idx;
+      document.getElementById('modalTitle').innerText = "Modifier le rappel";
+      document.getElementById('modalInput1').value = appData.urgents[idx];
+      document.getElementById('modalInput2').style.display = 'none';
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function editPret(id) {
+      const p = appData.prets.find(x => x.id === id);
+      document.getElementById('entryType').value = 'pret';
+      document.getElementById('entryKey').value = id;
+      document.getElementById('modalTitle').innerText = "Modifier le prêt";
+      document.getElementById('modalInput1').value = p.text;
+      document.getElementById('modalInput2').value = p.dest;
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function editRH(id) {
+      const r = appData.rh.find(x => x.id === id);
+      document.getElementById('entryType').value = 'rh';
+      document.getElementById('entryKey').value = id;
+      document.getElementById('modalTitle').innerText = "Modifier RH";
+      document.getElementById('modalInput1').value = r.text;
+      document.getElementById('modalInput2').value = r.detail;
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function editCommande(id) {
+      const c = appData.commandes.find(x => x.id === id);
+      document.getElementById('entryType').value = 'commande';
+      document.getElementById('entryKey').value = id;
+      document.getElementById('modalTitle').innerText = "Modifier la commande";
+      document.getElementById('modalInput1').value = c.item;
+      document.getElementById('modalInput2').value = c.prix || '';
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').classList.remove('active');
+      document.getElementById('modalInput1').value = '';
+      document.getElementById('modalInput2').value = '';
+    }
+
+    function saveModalData() {
+      const type = document.getElementById('entryType').value;
+      const keyOrId = document.getElementById('entryKey').value;
+      const v1 = document.getElementById('modalInput1').value.trim();
+      const v2 = document.getElementById('modalInput2').value.trim();
+
+      if (type === 'calendar_day') {
+        if (!appData.events) appData.events = {};
+        if (v1) {
+          appData.events[keyOrId] = v1;
+        } else {
+          delete appData.events[keyOrId];
+        }
+      } else if (type === 'urgent') {
+        if (!v1) return alert("Veuillez saisir un texte");
+        if (keyOrId === '-1') appData.urgents.push(v1);
+        else appData.urgents[parseInt(keyOrId)] = v1;
+      } else if (type === 'pret') {
+        if (!v1) return alert("Veuillez saisir un texte");
+        if (keyOrId === '-1') appData.prets.push({ id: Date.now(), text: v1, dest: v2 || 'Extérieur', type: 'tech' });
+        else {
+          const item = appData.prets.find(x => x.id === parseInt(keyOrId));
+          item.text = v1; item.dest = v2;
+        }
+      } else if (type === 'rh') {
+        if (!v1) return alert("Veuillez saisir un texte");
+        if (keyOrId === '-1') appData.rh.push({ id: Date.now(), text: v1, detail: v2 || 'En cours', type: 'rh' });
+        else {
+          const item = appData.rh.find(x => x.id === parseInt(keyOrId));
+          item.text = v1; item.detail = v2;
+        }
+      } else if (type === 'commande') {
+        if (!v1) return alert("Veuillez saisir un texte");
+        const prix = parseFloat(v2) || 0;
+        if (keyOrId === '-1') appData.commandes.push({ id: Date.now(), item: v1, prix: prix });
+        else {
+          const item = appData.commandes.find(x => x.id === parseInt(keyOrId));
+          item.item = v1; item.prix = prix;
+        }
+      }
+
+      syncSave();
+      closeModal();
+    }
+
+    // Horloge
     function updateClock() {
       const now = new Date();
       document.getElementById('liveClock').innerText = now.toLocaleTimeString('fr-FR');
-      const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-      document.getElementById('liveDate').innerText = now.toLocaleDateString('fr-FR', options);
+      const opt = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      document.getElementById('liveDate').innerText = now.toLocaleDateString('fr-FR', opt);
     }
     setInterval(updateClock, 1000);
     updateClock();
 
-    function openModal(type) {
-      document.getElementById('entryType').value = type;
-      const modal = document.getElementById('formModal');
-      const title = document.getElementById('modalTitle');
-      if (type === 'pret') {
-        title.innerText = "Ajouter un prêt";
-        document.getElementById('input1').placeholder = "Matériel (ex: Clé pass, Manomètre)";
-        document.getElementById('input2').placeholder = "Bénéficiaire / Site (ex: Taris)";
-        document.getElementById('input3').style.display = 'none';
-      } else if (type === 'rh') {
-        title.innerText = "Ajouter une alerte RH";
-        document.getElementById('input1').placeholder = "Agent & Motif (ex: Congés Alex)";
-        document.getElementById('input2').placeholder = "Dates (ex: 15/11 au 20/11)";
-        document.getElementById('input3').style.display = 'none';
-      } else if (type === 'agenda') {
-        title.innerText = "Ajouter un événement Agenda";
-        document.getElementById('input1').placeholder = "Jour (ex: J 19/11)";
-        document.getElementById('input2').placeholder = "Description de l'intervention";
-        document.getElementById('input3').style.display = 'block';
-        document.getElementById('input3').placeholder = "Tag (Technique, Férié, RH, RDV)";
-      }
-      modal.classList.add('active');
-    }
-
-    function closeModal() {
-      document.getElementById('formModal').classList.remove('active');
-      document.getElementById('input1').value = '';
-      document.getElementById('input2').value = '';
-      document.getElementById('input3').value = '';
-    }
-
-    function saveEntry() {
-      const type = document.getElementById('entryType').value;
-      const v1 = document.getElementById('input1').value;
-      const v2 = document.getElementById('input2').value;
-      const v3 = document.getElementById('input3').value;
-      if (!v1) return alert('Veuillez remplir au moins le premier champ');
-
-      const newId = Date.now();
-      if (type === 'pret') {
-        appData.prets.push({ id: newId, text: v1, dest: v2 || 'Extérieur', type: 'tech' });
-      } else if (type === 'rh') {
-        appData.rh.push({ id: newId, text: v1, detail: v2 || 'En cours', type: 'rh' });
-      } else if (type === 'agenda') {
-        appData.agenda.push({ id: newId, date: v1, label: v2, tag: 'tech', tagText: v3 || 'Intervention' });
-      }
-      saveAll();
-      closeModal();
-    }
-
+    // Export / Import JSON
     function exportData() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
       const dl = document.createElement('a');
       dl.setAttribute("href", dataStr);
-      dl.setAttribute("download", "sauvegarde_agenda.json");
+      dl.setAttribute("download", "agenda_vitrine_sauvegarde.json");
       dl.click();
     }
 
@@ -512,20 +825,38 @@
       reader.onload = function(e) {
         try {
           appData = JSON.parse(e.target.result);
-          saveAll();
+          if (!appData.events) appData.events = {};
+          syncSave();
           alert("Données importées avec succès !");
-        } catch(err) {
-          alert("Fichier JSON invalide");
-        }
+        } catch(err) { alert("Fichier JSON invalide"); }
       };
       reader.readAsText(file);
     }
 
-    function resetDefaults() {
-      if (confirm("Réinitialiser avec les données du tableau blanc ?")) {
-        appData = defaultData;
-        saveAll();
+    // Configuration Firebase
+    function openConfigFirebase() {
+      document.getElementById('firebaseConfigJson').value = localStorage.getItem('agenda_fb_config') || '';
+      document.getElementById('firebaseModal').classList.add('active');
+    }
+    function closeFirebaseModal() {
+      document.getElementById('firebaseModal').classList.remove('active');
+    }
+    function saveFirebaseConfig() {
+      const val = document.getElementById('firebaseConfigJson').value.trim();
+      if (!val) return;
+      try {
+        JSON.parse(val);
+        localStorage.setItem('agenda_fb_config', val);
+        alert("Configuration sauvegardée ! Actualisation en cours...");
+        location.reload();
+      } catch(e) {
+        alert("Format JSON invalide.");
       }
+    }
+    function disableCloud() {
+      localStorage.removeItem('agenda_fb_config');
+      alert("Synchro Cloud désactivée.");
+      location.reload();
     }
 
     render();
