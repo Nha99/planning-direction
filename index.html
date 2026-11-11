@@ -900,7 +900,7 @@
     <div class="agent-header-box">
       <div class="agent-name-title" id="currentAgentTitle">👤 Espace Agent</div>
       <div class="agent-actions">
-        <button onclick="openChangePinModal()" style="font-size:0.75rem;">🔑 Changer code PIN (4 chiffres)</button>
+        
         <button onclick="addNewAgentMemoCard()" class="primary" style="font-size:0.75rem;">+ Ajouter un bloc</button>
       </div>
     </div>
@@ -1112,6 +1112,7 @@
 
     function relockScreen() {
       if (auth) auth.signOut();
+      syncInitialized = false;
       document.getElementById('gatePassInput').value = '';
       document.getElementById('gateErrorMsg').style.display = 'none';
       document.getElementById('lockOverlay').style.display = 'flex';
@@ -1130,20 +1131,21 @@
           // Initialisation de la synchronisation Firebase une fois authentifié
           initFirebaseSync();
         } else {
+          syncInitialized = false;
           document.getElementById('lockOverlay').style.display = 'flex';
           if (cloudRef) cloudRef.off();
         }
       });
     } else {
-      document.getElementById('lockOverlay').style.display = 'none';
-      initFirebaseSync();
+      // Si la connexion réseau échoue avant le chargement du SDK Auth, garder l'overlay visible avec message d'erreur clair
+      document.getElementById('gateErrorMsg').innerText = "Connexion réseau requise pour authentifier le code PIN.";
+      document.getElementById('gateErrorMsg').style.display = 'block';
     }
 
     // Données par défaut fiabilisées
     var defaultAgents = {
       lora: {
         name: "Lora",
-        pinHash: sha256Pure("1234"),
         memos: [
           { id: 1, title: "A FAIRE / SUIVIS", colorClass: "green", lines: [{ text: "TRM 25/11", done: false }, { text: "Formation 17/11 13h", done: false }] },
           { id: 2, title: "CONGÉS & RÉCUPÉRATIONS", colorClass: "pink", lines: [{ text: "Congés : 8/10, 13/10 RC, 23/10 RC", done: false }] }
@@ -1151,7 +1153,6 @@
       },
       stephane: {
         name: "Stéphane",
-        pinHash: sha256Pure("1234"),
         memos: [
           { id: 1, title: "CONGÉS & PLANNING", colorClass: "amber", lines: [{ text: "Congés 25/10 au 1/11", done: false }] },
           { id: 2, title: "INTERVENTIONS TECHNIQUES", colorClass: "", lines: [{ text: "Suivi chaufferie et compteurs", done: false }] }
@@ -1159,7 +1160,6 @@
       },
       malik: {
         name: "Malik",
-        pinHash: sha256Pure("1234"),
         memos: [
           { id: 1, title: "PLANNING & SUIVI DE SITE", colorClass: "green", lines: [{ text: "Permanence week-end", done: false }] },
           { id: 2, title: "ÉQUIPEMENTS & MATÉRIEL", colorClass: "", lines: [{ text: "Vérification des lignes d'eau", done: false }] }
@@ -1167,7 +1167,6 @@
       },
       anas: {
         name: "Anas",
-        pinHash: sha256Pure("1234"),
         memos: [
           { id: 1, title: "CONGÉS & RÉCUPÉRATIONS", colorClass: "pink", lines: [{ text: "Congé 29/10 RC", done: false }] },
           { id: 2, title: "EXPLOITATION & TÂCHES", colorClass: "green", lines: [{ text: "Point technique gymnase", done: false }] }
@@ -1494,82 +1493,13 @@
       }
     }
 
-    // Gestion Sécurité Espaces Agents (Code PIN)
-    var pendingAgentToOpen = null;
-    var unlockedAgents = {};
-
+    // Ouverture directe des espaces agents (la sécurité est déjà garantie par l'authentification Firebase)
     function tryOpenAgentTab(agentKey) {
-      if (unlockedAgents[agentKey]) {
-        openAgentDirect(agentKey);
-      } else {
-        pendingAgentToOpen = agentKey;
-        var ag = (appData.agents && appData.agents[agentKey]) || defaultAgents[agentKey];
-        document.getElementById('agentAuthTitle').innerText = "🔐 Espace " + ag.name;
-        document.getElementById('agentPinInput').value = '';
-        document.getElementById('agentAuthError').style.display = 'none';
-        document.getElementById('agentAuthModal').classList.add('active');
-        document.getElementById('agentPinInput').focus();
-      }
-    }
-
-    function closeAgentAuthModal() {
-      document.getElementById('agentAuthModal').classList.remove('active');
-      pendingAgentToOpen = null;
-    }
-
-    function validateAgentPin() {
-      var input = document.getElementById('agentPinInput').value.trim();
-      var h = sha256Pure(input);
-      var ag = (appData.agents && appData.agents[pendingAgentToOpen]) || defaultAgents[pendingAgentToOpen];
-
-      if (h === ag.pinHash || h === HASH_MASTER) {
-        unlockedAgents[pendingAgentToOpen] = true;
-        closeAgentAuthModal();
-        openAgentDirect(pendingAgentToOpen);
-      } else {
-        document.getElementById('agentAuthError').style.display = 'block';
-        document.getElementById('agentPinInput').value = '';
-        document.getElementById('agentPinInput').focus();
-      }
-    }
-
-    function openAgentDirect(agentKey) {
       activeAgentKey = agentKey;
       var ag = (appData.agents && appData.agents[agentKey]) || defaultAgents[agentKey];
       document.getElementById('currentAgentTitle').innerHTML = "👤 Espace Personnel : <strong>" + esc(ag.name) + "</strong>";
       renderAgentMemos();
       switchTab('agent');
-    }
-
-    function openChangePinModal() {
-      if (!activeAgentKey) return;
-      var ag = appData.agents[activeAgentKey];
-      document.getElementById('changePinTitle').innerText = "🔑 Modifier le code PIN de " + ag.name;
-      document.getElementById('newPinInput1').value = '';
-      document.getElementById('newPinInput2').value = '';
-      document.getElementById('changePinModal').classList.add('active');
-      document.getElementById('newPinInput1').focus();
-    }
-
-    function closeChangePinModal() {
-      document.getElementById('changePinModal').classList.remove('active');
-    }
-
-    function saveNewAgentPin() {
-      var p1 = document.getElementById('newPinInput1').value.trim();
-      var p2 = document.getElementById('newPinInput2').value.trim();
-
-      if (!/^[0-9]{4}$/.test(p1)) {
-        return alert("Le code doit comporter exactement 4 chiffres numériques.");
-      }
-      if (p1 !== p2) {
-        return alert("Les deux codes saisis ne correspondent pas.");
-      }
-
-      appData.agents[activeAgentKey].pinHash = sha256Pure(p1);
-      syncSave();
-      closeChangePinModal();
-      alert("Nouveau code PIN enregistré et synchronisé !");
     }
 
     // ================= DRAG & DROP RÉORGANISATION DES BLOCS =================
@@ -1867,8 +1797,8 @@
         } else {
           for (var j = 0; j < evs.length; j++) {
             html += '<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:6px; font-size:0.82rem;">';
-            html += '<span style="cursor:pointer; flex:1;" onclick="editVenueEvent(\'' + v.id + '\', ' + j + ')">• ' + esc(evs[j]) + '</span>';
-            html += '<button onclick="deleteVenueEvent(\'' + v.id + '\', ' + j + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
+            html += '<span style="cursor:pointer; flex:1;" onclick="editVenueEvent(\'' + esc(v.id) + '\', ' + Number(j) + ')">• ' + esc(evs[j]) + '</span>';
+            html += '<button onclick="deleteVenueEvent(\'' + esc(v.id) + '\', ' + Number(j) + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
             html += '</div>';
           }
         }
@@ -1887,7 +1817,7 @@
       for (var i = 0; i < memos.length; i++) {
         var m = memos[i];
         html += '<div class="memo-card">';
-        html += '<div class="memo-title-box" onclick="editMemoTitle(' + m.id + ')">';
+        html += '<div class="memo-title-box" onclick="editMemoTitle(' + Number(m.id) + ')">';
         html += '<div class="memo-title ' + esc(m.colorClass || '') + '">' + esc(m.title) + '</div>';
         html += '<span style="font-size:0.75rem; color:#64748b;">✎ Renommer</span>';
         html += '</div>';
@@ -1897,16 +1827,16 @@
         for (var j = 0; j < lines.length; j++) {
           var ln = lines[j];
           html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
-          html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleMemoLine(' + m.id + ', ' + j + ')" style="cursor:pointer;">';
-          html += '<span class="memo-line-text" onclick="editMemoLineText(' + m.id + ', ' + j + ')">' + esc(ln.text) + '</span>';
-          html += '<button onclick="deleteMemoLine(' + m.id + ', ' + j + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
+          html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" style="cursor:pointer;">';
+          html += '<span class="memo-line-text" onclick="editMemoLineText(' + Number(m.id) + ', ' + Number(j) + ')">' + esc(ln.text) + '</span>';
+          html += '<button onclick="deleteMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
           html += '</div>';
         }
         html += '</div>';
 
         html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">';
-        html += '<button onclick="addMemoLine(' + m.id + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
-        html += '<button onclick="deleteMemoCard(' + m.id + ')" class="danger" style="padding:3px 6px; font-size:0.7rem;">Supprimer bloc</button>';
+        html += '<button onclick="addMemoLine(' + Number(m.id) + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
+        html += '<button onclick="deleteMemoCard(' + Number(m.id) + ')" class="danger" style="padding:3px 6px; font-size:0.7rem;">Supprimer bloc</button>';
         html += '</div>';
 
         html += '</div>';
@@ -1924,7 +1854,7 @@
       for (var i = 0; i < memos.length; i++) {
         var m = memos[i];
         html += '<div class="memo-card">';
-        html += '<div class="memo-title-box" onclick="editAgentMemoTitle(' + m.id + ')">';
+        html += '<div class="memo-title-box" onclick="editAgentMemoTitle(' + Number(m.id) + ')">';
         html += '<div class="memo-title ' + esc(m.colorClass || '') + '">' + esc(m.title) + '</div>';
         html += '<span style="font-size:0.75rem; color:#64748b;">✎ Renommer</span>';
         html += '</div>';
@@ -1934,16 +1864,16 @@
         for (var j = 0; j < lines.length; j++) {
           var ln = lines[j];
           html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
-          html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleAgentMemoLine(' + m.id + ', ' + j + ')" style="cursor:pointer;">';
-          html += '<span class="memo-line-text" onclick="editAgentMemoLineText(' + m.id + ', ' + j + ')">' + esc(ln.text) + '</span>';
-          html += '<button onclick="deleteAgentMemoLine(' + m.id + ', ' + j + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
+          html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleAgentMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" style="cursor:pointer;">';
+          html += '<span class="memo-line-text" onclick="editAgentMemoLineText(' + Number(m.id) + ', ' + Number(j) + ')">' + esc(ln.text) + '</span>';
+          html += '<button onclick="deleteAgentMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
           html += '</div>';
         }
         html += '</div>';
 
         html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">';
-        html += '<button onclick="addAgentMemoLine(' + m.id + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
-        html += '<button onclick="deleteAgentMemoCard(' + m.id + ')" class="danger" style="padding:3px 6px; font-size:0.7rem;">Supprimer bloc</button>';
+        html += '<button onclick="addAgentMemoLine(' + Number(m.id) + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
+        html += '<button onclick="deleteAgentMemoCard(' + Number(m.id) + ')" class="danger" style="padding:3px 6px; font-size:0.7rem;">Supprimer bloc</button>';
         html += '</div>';
 
         html += '</div>';
