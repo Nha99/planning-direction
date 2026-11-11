@@ -2,12 +2,13 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Territoire Maison Blanche 75013 - Tableau de Bord Vitrine</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
   <!-- Firebase SDKs Compat pour navigateur direct sans compilation -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <style>
     :root {
       --bg-color: #070a11;
@@ -33,7 +34,7 @@
       overflow-x: hidden;
     }
 
-    /* Écran de verrouillage général */
+    /* Écran de verrouillage général PIN (7513 ou Master 1907) */
     #lockOverlay {
       position: fixed;
       inset: 0;
@@ -86,7 +87,7 @@
       box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
     }
 
-    /* En-tête Adaptatif Mobile & Desktop */
+    /* En-tête Navigation */
     header {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -100,7 +101,6 @@
     }
     .brand { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; }
     
-    /* Navigation à défilement tactile fluide */
     .nav-tabs {
       display: flex;
       gap: 6px;
@@ -150,7 +150,7 @@
       flex-shrink: 0;
     }
 
-    /* Widget Météo Dynamique */
+    /* Widget Météo Dynamique (Paris 13e) */
     .weather-widget {
       display: flex;
       align-items: center;
@@ -215,12 +215,20 @@
     button.danger { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
     button.danger:hover { background: #dc2626; color: white; }
 
-    /* Cartes & Conteneurs Réorganisables */
+    /* Structure Dashboard & Grilles */
     .dashboard-container {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
+
+    /* Grille 2 colonnes fidèle à V9 pour Desktop */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -244,7 +252,6 @@
       align-items: center;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       padding-bottom: 8px;
-      cursor: default;
     }
     .card-title-group {
       display: flex;
@@ -275,6 +282,55 @@
       text-decoration: underline dotted;
     }
 
+    /* Redimensionnement propre : support bureau sans casser la grille */
+    .resizable-block {
+      resize: vertical;
+      overflow: hidden;
+      min-height: 220px;
+    }
+    .agenda-resizable-box {
+      min-height: 320px;
+      height: 480px;
+      max-height: 85vh;
+    }
+
+    /* Scrollbars internes garanties (ne masque jamais le contenu) */
+    .card-scroll-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto !important;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 6px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(56, 189, 248, 0.4) rgba(255, 255, 255, 0.04);
+    }
+    .card-scroll-body::-webkit-scrollbar,
+    .memo-lines::-webkit-scrollbar,
+    .venue-events-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .card-scroll-body::-webkit-scrollbar-track,
+    .memo-lines::-webkit-scrollbar-track,
+    .venue-events-scroll::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+    }
+    .card-scroll-body::-webkit-scrollbar-thumb,
+    .memo-lines::-webkit-scrollbar-thumb,
+    .venue-events-scroll::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.45);
+      border-radius: 8px;
+    }
+    .card-scroll-body::-webkit-scrollbar-thumb:hover,
+    .memo-lines::-webkit-scrollbar-thumb:hover,
+    .venue-events-scroll::-webkit-scrollbar-thumb:hover {
+      background: #38bdf8;
+    }
+
     .tab-content { display: none; flex-direction: column; gap: 12px; }
     .tab-content.active { display: flex; }
 
@@ -287,6 +343,8 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      min-height: 120px;
+      max-height: 360px;
     }
     .urgent-header { display: flex; justify-content: space-between; align-items: center; }
     .urgent-title {
@@ -295,7 +353,9 @@
       font-size: 0.85rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
+      cursor: pointer;
     }
+    .urgent-title:hover { text-decoration: underline dotted; }
     .urgent-items { display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; }
     .urgent-row {
       display: flex;
@@ -309,12 +369,7 @@
     .urgent-text { flex: 1; cursor: pointer; }
     .urgent-text:hover { text-decoration: underline dotted; }
 
-    /* Grille 2 colonnes Supérieure & Inférieure */
-    .grid-2col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+    /* Listes d'items */
     .item-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
     .item-row {
       display: flex;
@@ -345,76 +400,6 @@
       text-decoration: underline dotted;
       color: #38bdf8;
     }
-
-    /* Cartes Redimensionnables & Barres de Défilement Visibles */
-    .resizable-card {
-      resize: vertical;
-      overflow: hidden;
-      min-height: 200px;
-      display: flex;
-      flex-direction: column;
-    }
-    .agenda-resizable-box {
-      min-height: 320px;
-      height: 460px;
-      max-height: 85vh;
-    }
-    
-    /* Conteneurs de scroll interne garantis sur PC et Mobile */
-    .card-scroll-body, .scroll-internal {
-      flex: 1 1 auto;
-      min-height: 0; /* CRUCIAL pour forcer le scroll en flexbox */
-      max-height: 100%;
-      overflow-y: auto !important;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      padding-right: 6px;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(56, 189, 248, 0.5) rgba(255, 255, 255, 0.05);
-    }
-
-    /* Style barre de défilement toujours visible et contrastée */
-    .card-scroll-body::-webkit-scrollbar,
-    .scroll-internal::-webkit-scrollbar,
-    .memo-lines::-webkit-scrollbar {
-      width: 7px;
-    }
-    .card-scroll-body::-webkit-scrollbar-track,
-    .scroll-internal::-webkit-scrollbar-track,
-    .memo-lines::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.04);
-      border-radius: 8px;
-    }
-    .card-scroll-body::-webkit-scrollbar-thumb,
-    .scroll-internal::-webkit-scrollbar-thumb,
-    .memo-lines::-webkit-scrollbar-thumb {
-      background: rgba(56, 189, 248, 0.5);
-      border-radius: 8px;
-    }
-    .card-scroll-body::-webkit-scrollbar-thumb:hover,
-    .scroll-internal::-webkit-scrollbar-thumb:hover,
-    .memo-lines::-webkit-scrollbar-thumb:hover {
-      background: #38bdf8;
-    }
-
-    /* État étendu / réduit pour mobile */
-    .card.expanded, .grid-2col.expanded {
-      height: 520px !important;
-      max-height: 80vh !important;
-    }
-    .size-toggle-btn {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: var(--accent-color);
-      padding: 2px 7px;
-      font-size: 0.72rem;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .size-toggle-btn:hover { background: rgba(56, 189, 248, 0.2); }
 
     /* Lignes Agenda */
     .day-row {
@@ -504,8 +489,13 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 220px;
+    }
+    .venue-events-scroll {
+      max-height: 200px;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
       -webkit-overflow-scrolling: touch;
     }
     .venue-events-title {
@@ -684,18 +674,6 @@
     /* ================= RESPONSIVE MOBILE AMÉLIORÉ ================= */
     @media (max-width: 768px) {
       body { padding: 8px; gap: 10px; }
-      .resizable-card {
-        resize: none; /* Le redimensionnement tactile se fait via le bouton ↕ Taille */
-        min-height: 180px;
-        max-height: 380px;
-      }
-      .card.expanded, .grid-2col.expanded {
-        max-height: 75vh !important;
-        height: auto !important;
-      }
-      .card-scroll-body, .scroll-internal {
-        max-height: 280px;
-      }
       header {
         flex-direction: column;
         align-items: stretch;
@@ -709,6 +687,7 @@
         border-top: 1px solid rgba(255,255,255,0.06);
         padding-top: 8px;
       }
+      /* Passage sur une seule colonne uniquement sur smartphone */
       .grid-2col, .territory-grid, .moodboard-grid, .settings-grid {
         grid-template-columns: 1fr !important;
       }
@@ -721,21 +700,49 @@
       .clock { font-size: 1.15rem; }
       .admin-bar { justify-content: center; }
     }
+  
+    /* Mode Affichage Écran Vitrine (Lecture seule automatique) */
+    body.readonly-mode button:not(.tab-btn),
+    body.readonly-mode .drag-handle,
+    body.readonly-mode .admin-bar,
+    body.readonly-mode .tab-btn.agent,
+    body.readonly-mode .tab-btn[onclick*="parametres"] {
+      display: none !important;
+    }
+    body.readonly-mode .item-clickable-content,
+    body.readonly-mode .urgent-text,
+    body.readonly-mode .day-content,
+    body.readonly-mode .memo-line-text,
+    body.readonly-mode .memo-title-box,
+    body.readonly-mode input[type="checkbox"],
+    body.readonly-mode .card-title {
+      pointer-events: none !important;
+    }
+
   </style>
 </head>
 <body>
 
-  <!-- ÉCRAN DE VERROUILLAGE GÉNÉRAL (7513 ou MASTER 1907) -->
+  <!-- ÉCRAN DE CONNEXION SÉCURISÉ PAR PIN (VÉRIFIÉ SERVEUR FIREBASE) -->
   <div id="lockOverlay">
     <div class="lock-box">
       <div class="lock-icon">🔒</div>
       <div>
-        <div style="font-weight: 800; font-size: 1.15rem; color: #f8fafc; letter-spacing: 0.05em;">ACCÈS RESTREINT</div>
+        <div style="font-weight: 800; font-size: 1.15rem; color: #f8fafc; letter-spacing: 0.05em;">ACCÈS SÉCURISÉ</div>
         <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Territoire Maison Blanche 75013</div>
       </div>
-      <input type="password" id="gatePassInput" class="pin-input" placeholder="••••" maxlength="4" onkeypress="if(event.key === 'Enter') checkGateAuth()">
-      <button onclick="checkGateAuth()" class="primary" style="width: 100%; padding: 12px; font-size: 0.9rem;">Déverrouiller l'écran</button>
-      <div id="gateErrorMsg" style="font-size: 0.78rem; color: #f87171; display: none;">Code PIN incorrect</div>
+      <select id="userProfileSelect" style="padding: 10px; font-size: 0.88rem; background: #1e293b; color: white; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);">
+        <option value="direction">🏛️ Direction & Équipe (Édition)</option>
+        <option value="ecran">📺 Écran Vitrine QM43R (Lecture seule)</option>
+        <option value="lora">👤 Lora</option>
+        <option value="stephane">👤 Stéphane</option>
+        <option value="malik">👤 Malik</option>
+        <option value="anas">👤 Anas</option>
+        <option value="master">🔑 Master Administrateur</option>
+      </select>
+      <input type="password" id="gatePassInput" class="pin-input" placeholder="Code PIN ••••" maxlength="4" onkeypress="if(event.key === 'Enter') checkGateAuth()">
+      <button onclick="checkGateAuth()" class="primary" style="width: 100%; padding: 12px; font-size: 0.9rem;">Déverrouiller</button>
+      <div id="gateErrorMsg" style="font-size: 0.78rem; color: #f87171; display: none;">Code PIN incorrect pour ce profil</div>
     </div>
   </div>
 
@@ -746,6 +753,7 @@
         <button class="tab-btn active" onclick="switchTab('agenda')">📅 Agenda</button>
         <button class="tab-btn" onclick="switchTab('territoire')">📍 Territoire</button>
         <button class="tab-btn" onclick="switchTab('moodboard')">📋 Mémo et Suivi</button>
+        <!-- Onglets agents individuels préservés -->
         <button class="tab-btn agent" onclick="tryOpenAgentTab('lora')">👤 Lora</button>
         <button class="tab-btn agent" onclick="tryOpenAgentTab('stephane')">👤 Stéphane</button>
         <button class="tab-btn agent" onclick="tryOpenAgentTab('malik')">👤 Malik</button>
@@ -772,35 +780,31 @@
 
   <!-- ================= ONGLET 1 : AGENDA & TABLEAU DE BORD ================= -->
   <div id="tab-agenda" class="tab-content active">
-    <!-- Conteneur Réorganisable (Drag & Drop) -->
     <div class="dashboard-container" id="dashboardContainer">
       
       <!-- BLOC 1 : Rappels Urgents -->
-      <div class="card urgent-banner resizable-card" id="block-urgents" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)" style="min-height: 140px; max-height: 380px;">
+      <div class="card urgent-banner resizable-block" id="block-urgents" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
         <div class="urgent-header">
           <div class="card-title-group">
             <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
-            <div class="urgent-title" onclick="renameCustomBlock('urgents')">⚠️ RAPPELS IMPORTANTS & ÉCHÉANCES</div>
+            <div class="urgent-title" id="title-urgents" onclick="renameCustomBlock('urgents')">⚠️ RAPPELS IMPORTANTS & ÉCHÉANCES</div>
           </div>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <button onclick="toggleCardSize('block-urgents')" class="size-toggle-btn" title="Agrandir / Réduire la hauteur">↕ Taille</button>
-            <button onclick="openUrgentModal()" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajouter un rappel</button>
-          </div>
+          <button onclick="openUrgentModal()" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajouter un rappel</button>
         </div>
         <div class="card-scroll-body" style="padding-top: 4px;">
           <div class="urgent-items" id="urgentList"></div>
         </div>
       </div>
 
-      <!-- BLOC 2 : Prêts & RH (Grille 2 colonnes) -->
-      <div class="grid-2col resizable-card" id="block-prets-rh" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+      <!-- BLOC 2 : Prêts & RH (2 Colonnes côte à côte préservées sur PC) -->
+      <div class="grid-2col resizable-block" id="block-prets-rh" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
         <div class="card" style="margin:0; height:100%;">
           <div class="card-header">
             <div class="card-title-group">
               <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
-              <div class="card-title" onclick="renameCustomBlock('prets')">🔄 Prêts de matériel</div>
+              <div class="card-title" id="title-prets" onclick="renameCustomBlock('prets')">🔄 Prêts de matériel</div>
             </div>
-            <div style="display:flex; align-items:center; gap:6px;"><button onclick="toggleCardSize('block-prets-rh')" class="size-toggle-btn" title="Agrandir / Réduire">↕ Taille</button><button onclick="openGenericModal('pret')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button></div>
+            <button onclick="openGenericModal('pret')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
           </div>
           <div class="card-scroll-body">
             <ul class="item-list" id="pretsList"></ul>
@@ -811,7 +815,7 @@
           <div class="card-header">
             <div class="card-title-group">
               <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
-              <div class="card-title" onclick="renameCustomBlock('rh')">👥 RH & Alertes</div>
+              <div class="card-title" id="title-rh" onclick="renameCustomBlock('rh')">👥 RH & Alertes</div>
             </div>
             <button onclick="openGenericModal('rh')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
           </div>
@@ -822,25 +826,25 @@
       </div>
 
       <!-- BLOC 3 : Agenda Prévisionnel 35 Jours -->
-      <div class="card agenda-resizable-box resizable-card" id="block-agenda" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+      <div class="card agenda-resizable-box resizable-block" id="block-agenda" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
         <div class="card-header">
           <div class="card-title-group">
             <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
-            <div class="card-title" onclick="renameCustomBlock('agenda')">📅 Agenda Prévisionnel (35 jours glissants)</div>
+            <div class="card-title" id="title-agenda" onclick="renameCustomBlock('agenda')">📅 Agenda Prévisionnel (35 jours glissants)</div>
           </div>
-          <div style="display:flex; align-items:center; gap:8px;"><span style="font-size: 0.75rem; color: #94a3b8;">Cliquer directement sur un jour pour modifier</span><button onclick="toggleCardSize('block-agenda')" class="size-toggle-btn" title="Agrandir / Réduire">↕ Taille</button></div>
+          <div style="font-size: 0.75rem; color: #94a3b8;">Cliquer directement sur un jour pour modifier</div>
         </div>
         <div class="card-scroll-body" id="agendaScroll"></div>
       </div>
 
-      <!-- BLOC 4 : Partie Basse Divisée en 2 (Commandes/Devis + Tâches/Missions) -->
-      <div class="grid-2col resizable-card" id="block-bottom-grid" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+      <!-- BLOC 4 : Partie Basse (2 Colonnes côte à côte : Commandes/Devis + Tâches/Missions) -->
+      <div class="grid-2col resizable-block" id="block-bottom-grid" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
         <!-- Colonne 1 : Commandes & Devis -->
         <div class="card" style="margin:0; height:100%;">
           <div class="card-header">
             <div class="card-title-group">
               <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
-              <div class="card-title" onclick="renameCustomBlock('commandes')">📦 Commandes & Devis</div>
+              <div class="card-title" id="title-commandes" onclick="renameCustomBlock('commandes')">📦 Commandes & Devis</div>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-color);" id="totalCommandes">Total : 0 €</div>
@@ -857,9 +861,9 @@
           <div class="card-header">
             <div class="card-title-group">
               <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
-              <div class="card-title" onclick="renameCustomBlock('taches')">✅ Tâches & Missions</div>
+              <div class="card-title" id="title-taches" onclick="renameCustomBlock('taches')">✅ Tâches & Missions</div>
             </div>
-            <div style="display:flex; align-items:center; gap:6px;"><button onclick="toggleCardSize('block-bottom-grid')" class="size-toggle-btn" title="Agrandir / Réduire">↕ Taille</button><button onclick="openGenericModal('tache')" class="primary" style="padding: 3px 8px; font-size: 0.72rem;">+ Tâche</button></div>
+            <button onclick="openGenericModal('tache')" class="primary" style="padding: 3px 8px; font-size: 0.72rem;">+ Tâche</button>
           </div>
           <div class="card-scroll-body">
             <ul class="item-list" id="tachesList"></ul>
@@ -896,7 +900,7 @@
     <div class="agent-header-box">
       <div class="agent-name-title" id="currentAgentTitle">👤 Espace Agent</div>
       <div class="agent-actions">
-        <button onclick="openChangePinModal()" style="font-size:0.75rem;">🔑 Changer code PIN</button>
+        <button onclick="openChangePinModal()" style="font-size:0.75rem;">🔑 Changer code PIN (4 chiffres)</button>
         <button onclick="addNewAgentMemoCard()" class="primary" style="font-size:0.75rem;">+ Ajouter un bloc</button>
       </div>
     </div>
@@ -1044,94 +1048,98 @@
       console.warn("Connexion Firebase locale/hors ligne", e);
     }
 
-    var HASH_GATE = "da9d2b79c84bc1e8e257dcea2dfc4297e7bd0edf903f268fc5d4846ea1dd45dd"; // PIN 7513
-    var HASH_MASTER = "4332cd76590d0efdbd8d067acf531546da2ba0a67c538440e7defedbea48d1dc"; // MASTER PIN 1907
-
-    function sha256Pure(ascii) {
-      function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
-      var mathPow = Math.pow;
-      var maxWord = mathPow(2, 32);
-      var lengthProperty = 'length';
-      var i, j;
-      var result = '';
-      var words = [];
-      var asciiBitLength = ascii[lengthProperty] * 8;
-      var hash = [];
-      var k = [];
-      var primeCounter = 0;
-      var isComposite = {};
-      for (var candidate = 2; primeCounter < 64; candidate++) {
-        if (!isComposite[candidate]) {
-          for (i = 0; i < 313; i += candidate) { isComposite[i] = candidate; }
-          hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
-          k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
-        }
-      }
-      ascii += '\x80';
-      while (ascii[lengthProperty] % 64 - 56) ascii += '\x00';
-      for (i = 0; i < ascii[lengthProperty]; i++) {
-        j = ascii.charCodeAt(i);
-        if (j >> 8) return;
-        words[i >> 2] |= j << ((3 - i) % 4) * 8;
-      }
-      words[words[lengthProperty]] = ((asciiBitLength / maxWord) | 0);
-      words[words[lengthProperty]] = (asciiBitLength);
-      for (j = 0; j < words[lengthProperty];) {
-        var w = words.slice(j, j += 16);
-        var oldHash = hash;
-        hash = hash.slice(0, 8);
-        for (i = 0; i < 64; i++) {
-          var w15 = w[i - 15], w2 = w[i - 2];
-          var s0 = rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3);
-          var s1 = rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10);
-          var ch = (hash[4] & hash[5]) ^ (~hash[4] & hash[6]);
-          var temp1 = hash[7] + (rightRotate(hash[4], 6) ^ rightRotate(hash[4], 11) ^ rightRotate(hash[4], 25)) + ch + k[i] + (w[i] = (i < 16) ? w[i] : (w[i - 16] + s0 + w[i - 7] + s1) | 0);
-          var maj = (hash[0] & hash[1]) ^ (hash[0] & hash[2]) ^ (hash[1] & hash[2]);
-          var temp2 = (rightRotate(hash[0], 2) ^ rightRotate(hash[0], 13) ^ rightRotate(hash[0], 22)) + maj;
-          hash = [(temp1 + temp2) | 0].concat(hash);
-          hash[4] = (hash[4] + temp1) | 0;
-        }
-        for (i = 0; i < 8; i++) { hash[i] = (hash[i] + oldHash[i]) | 0; }
-      }
-      for (i = 0; i < 8; i++) {
-        for (i2 = 3; i2 >= 0; i2--) {
-          var b = (hash[i] >> (8 * i2)) & 255;
-          result += ((b < 16) ? 0 : '') + b.toString(16);
-        }
-      }
-      return result;
+    // Échappement XSS pour sécuriser tous les affichages
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
     }
 
-    // Gestion Verrouillage
+    // Authentification Sécurisée Firebase avec PIN 4 chiffres
+    var auth = null;
+    try {
+      auth = firebase.auth();
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    } catch(e) {
+      console.warn("Firebase Auth non initialisé", e);
+    }
+
+    // Mapping sécurisé Profil -> Email interne Firebase
+    function getProfileEmail(prof) {
+      return prof + "@maisonblanche75013.internal";
+    }
+    // Générateur de mot de passe sécurisé à partir du PIN (Firebase exige >= 6 caractères)
+    function pinToPass(prof, pin) {
+      return "mb_" + prof + "_" + pin + "_sec";
+    }
+
+    var currentUserProfile = null;
+    var isReadOnlyScreen = false;
+
     function checkGateAuth() {
-      var val = document.getElementById('gatePassInput').value.trim();
-      var h = sha256Pure(val);
-      if (h === HASH_GATE || h === HASH_MASTER) {
-        document.getElementById('lockOverlay').style.display = 'none';
-        sessionStorage.setItem('tizen_gate_open', '1');
-      } else {
-        var err = document.getElementById('gateErrorMsg');
+      var prof = document.getElementById('userProfileSelect').value;
+      var pin = document.getElementById('gatePassInput').value.trim();
+      var err = document.getElementById('gateErrorMsg');
+
+      if (!/^[0-9]{4}$/.test(pin)) {
+        err.innerText = "Veuillez entrer un code à 4 chiffres.";
         err.style.display = 'block';
-        document.getElementById('gatePassInput').value = '';
-        document.getElementById('gatePassInput').focus();
+        return;
       }
+
+      var email = getProfileEmail(prof);
+      var password = pinToPass(prof, pin);
+
+      if (!auth) {
+        // Mode secours local si hors ligne
+        document.getElementById('lockOverlay').style.display = 'none';
+        return;
+      }
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(function(userCred) {
+          err.style.display = 'none';
+          document.getElementById('gatePassInput').value = '';
+          document.getElementById('lockOverlay').style.display = 'none';
+        })
+        .catch(function(error) {
+          err.innerText = "Code PIN incorrect pour ce profil.";
+          err.style.display = 'block';
+          document.getElementById('gatePassInput').value = '';
+          document.getElementById('gatePassInput').focus();
+        });
     }
 
     function relockScreen() {
-      sessionStorage.removeItem('tizen_gate_open');
+      if (auth) auth.signOut();
       document.getElementById('gatePassInput').value = '';
       document.getElementById('gateErrorMsg').style.display = 'none';
       document.getElementById('lockOverlay').style.display = 'flex';
       document.getElementById('gatePassInput').focus();
     }
 
-    if (sessionStorage.getItem('tizen_gate_open') === '1') {
-      document.getElementById('lockOverlay').style.display = 'none';
+    // Écouteur d'état d'authentification persistant
+    if (auth) {
+      auth.onAuthStateChanged(function(user) {
+        if (user) {
+          document.getElementById('lockOverlay').style.display = 'none';
+          var email = user.email || '';
+          isReadOnlyScreen = (email.indexOf('ecran@') === 0);
+          document.body.classList.toggle('readonly-mode', isReadOnlyScreen);
+
+          // Initialisation de la synchronisation Firebase une fois authentifié
+          initFirebaseSync();
+        } else {
+          document.getElementById('lockOverlay').style.display = 'flex';
+          if (cloudRef) cloudRef.off();
+        }
+      });
     } else {
-      document.getElementById('lockOverlay').style.display = 'flex';
+      document.getElementById('lockOverlay').style.display = 'none';
+      initFirebaseSync();
     }
 
-    // Données par défaut
+    // Données par défaut fiabilisées
     var defaultAgents = {
       lora: {
         name: "Lora",
@@ -1356,6 +1364,14 @@
       venues: defaultVenues,
       memos: defaultMemos,
       agents: defaultAgents,
+      customTitles: {
+        urgents: "⚠️ RAPPELS IMPORTANTS & ÉCHÉANCES",
+        prets: "🔄 Prêts de matériel",
+        rh: "👥 RH & Alertes",
+        agenda: "📅 Agenda Prévisionnel (35 jours glissants)",
+        commandes: "📦 Commandes & Devis",
+        taches: "✅ Tâches & Missions"
+      },
       blockOrder: ["block-urgents", "block-prets-rh", "block-agenda", "block-bottom-grid"],
       theme: {
         bg: "#070a11",
@@ -1367,47 +1383,86 @@
       }
     };
 
-    var appData = defaultData;
+    // Normalisation prévenant la disparition des tableaux vides sur Firebase
+    function toArr(x) {
+      if (!x) return [];
+      if (Array.isArray(x)) return x.filter(function(i){ return i != null; });
+      return Object.keys(x).map(function(k){ return x[k]; });
+    }
 
-    try {
-      var stored = localStorage.getItem('mb_live_data_v9');
-      if (stored) {
-        var parsed = JSON.parse(stored);
-        if (parsed) {
-          appData = parsed;
-          if (!appData.taches) appData.taches = defaultData.taches;
-          if (!appData.agents) appData.agents = defaultAgents;
-          if (!appData.blockOrder) appData.blockOrder = defaultData.blockOrder;
+    function normalize(d) {
+      d = d || {};
+      var o = {};
+      var arrKeys = ['urgents', 'prets', 'rh', 'commandes', 'taches', 'venues', 'memos', 'blockOrder'];
+      for (var i = 0; i < arrKeys.length; i++) {
+        var k = arrKeys[i];
+        o[k] = toArr(d[k]);
+      }
+      o.events = (d.events && typeof d.events === 'object') ? d.events : {};
+      o.agents = (d.agents && typeof d.agents === 'object') ? d.agents : defaultAgents;
+      o.customTitles = (d.customTitles && typeof d.customTitles === 'object') ? d.customTitles : defaultData.customTitles;
+
+      o.venues = o.venues.map(function(v){ v.events = toArr(v.events); return v; });
+      o.memos = o.memos.map(function(m){ m.lines = toArr(m.lines); return m; });
+      if (!o.venues.length) o.venues = defaultVenues;
+      if (!o.blockOrder.length) o.blockOrder = defaultData.blockOrder;
+
+      // Agents memos normalization
+      for (var agKey in o.agents) {
+        if (o.agents.hasOwnProperty(agKey)) {
+          o.agents[agKey].memos = toArr(o.agents[agKey].memos).map(function(m){
+            m.lines = toArr(m.lines);
+            return m;
+          });
         }
       }
+
+      var t = d.theme || {};
+      var dt = defaultData.theme;
+      o.theme = {
+        bg: /^#[0-9a-fA-F]{6}$/.test(t.bg || '') ? t.bg : dt.bg,
+        text: /^#[0-9a-fA-F]{6}$/.test(t.text || '') ? t.text : dt.text,
+        accent: /^#[0-9a-fA-F]{6}$/.test(t.accent || '') ? t.accent : dt.accent,
+        highlight: /^#[0-9a-fA-F]{6}$/.test(t.highlight || '') ? t.highlight : dt.highlight,
+        holiday: /^#[0-9a-fA-F]{6}$/.test(t.holiday || '') ? t.holiday : dt.holiday,
+        font: t.font || dt.font
+      };
+      return o;
+    }
+
+    var appData = normalize(defaultData);
+
+    try {
+      var stored = localStorage.getItem('mb_live_data_v12');
+      if (stored) appData = normalize(JSON.parse(stored));
     } catch(e) {}
 
-    // SYNCHRONISATION FIREBASE
-    if (cloudRef) {
+    // Initialisation écoute temps réel sécurisée
+    var syncInitialized = false;
+    function initFirebaseSync() {
+      if (!cloudRef || syncInitialized) return;
+      syncInitialized = true;
       cloudRef.on('value', function(snapshot) {
         var val = snapshot.val();
         if (val) {
-          appData = val;
-          if (!appData.taches) appData.taches = defaultData.taches;
-          if (!appData.agents) appData.agents = defaultAgents;
-          if (!appData.blockOrder) appData.blockOrder = defaultData.blockOrder;
-          try { localStorage.setItem('mb_live_data_v9', JSON.stringify(appData)); } catch(e){}
+          appData = normalize(val);
+          try { localStorage.setItem('mb_live_data_v12', JSON.stringify(appData)); } catch(e){}
           applyTheme();
           renderAll();
           document.getElementById('syncBadge').innerText = "● Direct";
           document.getElementById('syncBadge').style.color = "#34d399";
         } else {
-          cloudRef.set(appData);
+          if (!isReadOnlyScreen) cloudRef.set(appData);
         }
       }, function(err) {
         console.warn("Erreur écoute Firebase:", err);
-        document.getElementById('syncBadge').innerText = "● Local";
+        document.getElementById('syncBadge').innerText = "● Verrouillé";
         document.getElementById('syncBadge').style.color = "#f59e0b";
       });
     }
 
     function syncSave() {
-      try { localStorage.setItem('mb_live_data_v9', JSON.stringify(appData)); } catch(e) {}
+      try { localStorage.setItem('mb_live_data_v12', JSON.stringify(appData)); } catch(e) {}
       if (cloudRef) cloudRef.set(appData);
       applyTheme();
       renderAll();
@@ -1439,7 +1494,7 @@
       }
     }
 
-    // Gestion Sécurité Espaces Agents
+    // Gestion Sécurité Espaces Agents (Code PIN)
     var pendingAgentToOpen = null;
     var unlockedAgents = {};
 
@@ -1481,7 +1536,7 @@
     function openAgentDirect(agentKey) {
       activeAgentKey = agentKey;
       var ag = (appData.agents && appData.agents[agentKey]) || defaultAgents[agentKey];
-      document.getElementById('currentAgentTitle').innerHTML = "👤 Espace Personnel : <strong>" + ag.name + "</strong>";
+      document.getElementById('currentAgentTitle').innerHTML = "👤 Espace Personnel : <strong>" + esc(ag.name) + "</strong>";
       renderAgentMemos();
       switchTab('agent');
     }
@@ -1549,7 +1604,6 @@
           container.insertBefore(draggedElement, targetCard);
         }
 
-        // Sauvegarder le nouvel ordre
         var newOrder = [];
         for (var i = 0; i < container.children.length; i++) {
           newOrder.push(container.children[i].id);
@@ -1575,31 +1629,30 @@
       }
     }
 
-    
-    function toggleCardSize(elementId) {
-      var el = document.getElementById(elementId);
-      if (!el) return;
-      el.classList.toggle('expanded');
-    }
-
     function resetBlockOrder() {
       appData.blockOrder = defaultData.blockOrder;
       syncSave();
       applyBlockOrder();
     }
 
+    // Renommage sauvegardé dans Firebase
     function renameCustomBlock(blockType) {
-      var currentTitle = "";
-      if (blockType === 'urgents') currentTitle = "RAPPELS IMPORTANTS & ÉCHÉANCES";
-      else if (blockType === 'prets') currentTitle = "Prêts de matériel";
-      else if (blockType === 'rh') currentTitle = "RH & Alertes";
-      else if (blockType === 'agenda') currentTitle = "Agenda Prévisionnel";
-      else if (blockType === 'commandes') currentTitle = "Commandes & Devis";
-      else if (blockType === 'taches') currentTitle = "Tâches & Missions";
-
-      var newTitle = prompt("Renommer cet encadré :", currentTitle);
+      var current = (appData.customTitles && appData.customTitles[blockType]) || defaultData.customTitles[blockType];
+      var newTitle = prompt("Renommer cet encadré :", current);
       if (newTitle && newTitle.trim()) {
-        alert("Encadré renommé : " + newTitle.trim());
+        if (!appData.customTitles) appData.customTitles = {};
+        appData.customTitles[blockType] = newTitle.trim();
+        syncSave();
+      }
+    }
+
+    function applyCustomTitles() {
+      var t = appData.customTitles || defaultData.customTitles;
+      for (var key in t) {
+        if (t.hasOwnProperty(key)) {
+          var el = document.getElementById('title-' + key);
+          if (el) el.innerText = t[key];
+        }
       }
     }
 
@@ -1638,15 +1691,17 @@
         }
       };
       xhr.onerror = function() {
-        document.getElementById('weatherToday').innerHTML = 'Paris 13: ☀️ 14°C';
-        document.getElementById('weatherTomorrow').innerHTML = 'Dem: ⛅ 15°C';
+        document.getElementById('weatherToday').innerHTML = 'Météo indisponible';
+        document.getElementById('weatherTomorrow').innerHTML = '--';
       };
+      xhr.ontimeout = xhr.onerror;
       xhr.send();
     }
 
     // ================= RENDUS GLOBAUX =================
     function renderAll() {
       applyBlockOrder();
+      applyCustomTitles();
       renderAgenda();
       renderTerritory();
       renderMoodboard();
@@ -1654,14 +1709,14 @@
     }
 
     function renderAgenda() {
-      // 1. Rappels Urgents (cliquables pour modifier, sans icône crayon)
+      // 1. Rappels Urgents
       var urgentEl = document.getElementById('urgentList');
       if (urgentEl) {
         var uHtml = '';
         var uList = appData.urgents || [];
         for (var i = 0; i < uList.length; i++) {
           uHtml += '<div class="urgent-row">';
-          uHtml += '<span class="urgent-text" onclick="editUrgent(' + i + ')">• ' + uList[i] + '</span>';
+          uHtml += '<span class="urgent-text" onclick="editUrgent(' + i + ')">• ' + esc(uList[i]) + '</span>';
           uHtml += '<button onclick="deleteUrgent(' + i + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
           uHtml += '</div>';
         }
@@ -1675,9 +1730,9 @@
         var pList = appData.prets || [];
         for (var j = 0; j < pList.length; j++) {
           var p = pList[j];
-          pHtml += '<li class="item-row ' + p.type + '">';
-          pHtml += '<div class="item-clickable-content" onclick="editPret(' + p.id + ')"><strong>' + p.text + '</strong> → ' + p.dest + '</div>';
-          pHtml += '<button onclick="deleteItem(\'prets\', ' + p.id + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          pHtml += '<li class="item-row ' + esc(p.type) + '">';
+          pHtml += '<div class="item-clickable-content" onclick="editPret(' + Number(p.id) + ')"><strong>' + esc(p.text) + '</strong> → ' + esc(p.dest) + '</div>';
+          pHtml += '<button onclick="deleteItem(\'prets\', ' + Number(p.id) + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
           pHtml += '</li>';
         }
         pretsEl.innerHTML = pHtml;
@@ -1690,9 +1745,9 @@
         var rList = appData.rh || [];
         for (var k = 0; k < rList.length; k++) {
           var r = rList[k];
-          rHtml += '<li class="item-row ' + r.type + '">';
-          rHtml += '<div class="item-clickable-content" onclick="editRH(' + r.id + ')"><strong>' + r.text + '</strong> : ' + r.detail + '</div>';
-          rHtml += '<button onclick="deleteItem(\'rh\', ' + r.id + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          rHtml += '<li class="item-row ' + esc(r.type) + '">';
+          rHtml += '<div class="item-clickable-content" onclick="editRH(' + Number(r.id) + ')"><strong>' + esc(r.text) + '</strong> : ' + esc(r.detail) + '</div>';
+          rHtml += '<button onclick="deleteItem(\'rh\', ' + Number(r.id) + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
           rHtml += '</li>';
         }
         rhEl.innerHTML = rHtml;
@@ -1706,12 +1761,12 @@
         var cList = appData.commandes || [];
         for (var l = 0; l < cList.length; l++) {
           var c = cList[l];
-          total += (c.prix || 0);
+          total += (Number(c.prix) || 0);
           cHtml += '<li class="item-row">';
-          cHtml += '<div class="item-clickable-content" onclick="editCommande(' + c.id + ')">• ' + c.item + '</div>';
+          cHtml += '<div class="item-clickable-content" onclick="editCommande(' + Number(c.id) + ')">• ' + esc(c.item) + '</div>';
           cHtml += '<div style="display:flex; align-items:center; gap:8px;">';
-          cHtml += '<strong style="color: var(--accent-color); font-size:0.8rem;">' + (c.prix ? c.prix + ' €' : 'En devis') + '</strong>';
-          cHtml += '<button onclick="deleteItem(\'commandes\', ' + c.id + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          cHtml += '<strong style="color: var(--accent-color); font-size:0.8rem;">' + (c.prix ? esc(c.prix) + ' €' : 'En devis') + '</strong>';
+          cHtml += '<button onclick="deleteItem(\'commandes\', ' + Number(c.id) + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
           cHtml += '</div></li>';
         }
         cmdEl.innerHTML = cHtml;
@@ -1719,7 +1774,7 @@
       var totalEl = document.getElementById('totalCommandes');
       if (totalEl) totalEl.innerText = 'Total : ' + total.toLocaleString('fr-FR') + ' €';
 
-      // 5. NOUVELLE RUBRIQUE : Tâches & Missions
+      // 5. Tâches & Missions
       var taskEl = document.getElementById('tachesList');
       if (taskEl) {
         var tHtml = '';
@@ -1727,15 +1782,15 @@
         for (var m = 0; m < tList.length; m++) {
           var tsk = tList[m];
           tHtml += '<li class="item-row task">';
-          tHtml += '<input type="checkbox" ' + (tsk.done ? 'checked' : '') + ' onchange="toggleTaskDone(' + tsk.id + ')" style="cursor:pointer; width:18px; height:18px;">';
-          tHtml += '<div class="item-clickable-content ' + (tsk.done ? 'memo-line done' : '') + '" onclick="editTache(' + tsk.id + ')">' + tsk.text + '</div>';
-          tHtml += '<button onclick="deleteItem(\'taches\', ' + tsk.id + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          tHtml += '<input type="checkbox" ' + (tsk.done ? 'checked' : '') + ' onchange="toggleTaskDone(' + Number(tsk.id) + ')" style="cursor:pointer; width:18px; height:18px;">';
+          tHtml += '<div class="item-clickable-content ' + (tsk.done ? 'memo-line done' : '') + '" onclick="editTache(' + Number(tsk.id) + ')">' + esc(tsk.text) + '</div>';
+          tHtml += '<button onclick="deleteItem(\'taches\', ' + Number(tsk.id) + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
           tHtml += '</li>';
         }
         taskEl.innerHTML = tHtml;
       }
 
-      // 6. Calendrier 35 Jours
+      // 6. Calendrier 35 Jours avec calcul exact sans bug d'heure d'été/hiver
       var agendaEl = document.getElementById('agendaScroll');
       if (agendaEl) {
         var now = new Date();
@@ -1743,7 +1798,7 @@
         var html = '';
 
         for (var offset = -1; offset < 34; offset++) {
-          var curDate = new Date(now.getTime() + offset * 86400000);
+          var curDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
           var key = formatDateKey(curDate);
           var dayOfWeek = curDate.getDay();
           var isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
@@ -1765,7 +1820,7 @@
 
           html += '<div class="' + rowClass + '">';
           html += '<div class="day-date">' + dayFormatted + (isToday ? ' ★' : '') + '</div>';
-          html += '<div class="day-content ' + (eventText ? '' : 'empty') + '" onclick="editDateEvent(\'' + key + '\', \'' + dayFormatted + '\')">' + (eventText || '—') + '</div>';
+          html += '<div class="day-content ' + (eventText ? '' : 'empty') + '" onclick="editDateEvent(\'' + key + '\', \'' + dayFormatted + '\')">' + esc(eventText || '—') + '</div>';
           html += '<div class="actions-btn">';
           if (eventText) {
             html += '<button onclick="deleteDateEvent(\'' + key + '\')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
@@ -1794,9 +1849,9 @@
         var v = list[i];
         html += '<div class="venue-card">';
         html += '<div class="venue-header">';
-        html += '<div><div class="venue-name">' + v.name + '</div>';
-        html += '<div class="venue-meta" style="margin-top:4px;">📍 <strong>' + v.address + '</strong> • 🚇 ' + v.metro + '<br><a href="tel:' + (v.phone || '') + '" class="venue-phone-badge">📞 ' + (v.phone || 'Non renseigné') + '</a></div></div>';
-        html += '<span class="venue-badge">' + v.type + '</span>';
+        html += '<div><div class="venue-name">' + esc(v.name) + '</div>';
+        html += '<div class="venue-meta" style="margin-top:4px;">📍 <strong>' + esc(v.address) + '</strong> • 🚇 ' + esc(v.metro) + '<br><a href="tel:' + esc(v.phone || '') + '" class="venue-phone-badge">📞 ' + esc(v.phone || 'Non renseigné') + '</a></div></div>';
+        html += '<span class="venue-badge">' + esc(v.type) + '</span>';
         html += '</div>';
 
         html += '<div class="venue-events-box">';
@@ -1805,17 +1860,19 @@
         html += '<button onclick="addVenueEvent(\'' + v.id + '\')" style="padding:2px 8px; font-size:0.7rem;">+ Événement</button>';
         html += '</div>';
 
+        html += '<div class="venue-events-scroll">';
         var evs = v.events || [];
         if (evs.length === 0) {
           html += '<div style="font-size:0.8rem; color:#64748b; font-style:italic;">Aucune intervention enregistrée</div>';
         } else {
           for (var j = 0; j < evs.length; j++) {
             html += '<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:6px; font-size:0.82rem;">';
-            html += '<span style="cursor:pointer; flex:1;" onclick="editVenueEvent(\'' + v.id + '\', ' + j + ')">• ' + evs[j] + '</span>';
+            html += '<span style="cursor:pointer; flex:1;" onclick="editVenueEvent(\'' + v.id + '\', ' + j + ')">• ' + esc(evs[j]) + '</span>';
             html += '<button onclick="deleteVenueEvent(\'' + v.id + '\', ' + j + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
             html += '</div>';
           }
         }
+        html += '</div>'; // fin scroll
         html += '</div></div>';
       }
       cont.innerHTML = html;
@@ -1831,7 +1888,7 @@
         var m = memos[i];
         html += '<div class="memo-card">';
         html += '<div class="memo-title-box" onclick="editMemoTitle(' + m.id + ')">';
-        html += '<div class="memo-title ' + (m.colorClass || '') + '">' + m.title + '</div>';
+        html += '<div class="memo-title ' + esc(m.colorClass || '') + '">' + esc(m.title) + '</div>';
         html += '<span style="font-size:0.75rem; color:#64748b;">✎ Renommer</span>';
         html += '</div>';
 
@@ -1841,7 +1898,7 @@
           var ln = lines[j];
           html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
           html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleMemoLine(' + m.id + ', ' + j + ')" style="cursor:pointer;">';
-          html += '<span class="memo-line-text" onclick="editMemoLineText(' + m.id + ', ' + j + ')">' + ln.text + '</span>';
+          html += '<span class="memo-line-text" onclick="editMemoLineText(' + m.id + ', ' + j + ')">' + esc(ln.text) + '</span>';
           html += '<button onclick="deleteMemoLine(' + m.id + ', ' + j + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
           html += '</div>';
         }
@@ -1868,7 +1925,7 @@
         var m = memos[i];
         html += '<div class="memo-card">';
         html += '<div class="memo-title-box" onclick="editAgentMemoTitle(' + m.id + ')">';
-        html += '<div class="memo-title ' + (m.colorClass || '') + '">' + m.title + '</div>';
+        html += '<div class="memo-title ' + esc(m.colorClass || '') + '">' + esc(m.title) + '</div>';
         html += '<span style="font-size:0.75rem; color:#64748b;">✎ Renommer</span>';
         html += '</div>';
 
@@ -1878,7 +1935,7 @@
           var ln = lines[j];
           html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
           html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleAgentMemoLine(' + m.id + ', ' + j + ')" style="cursor:pointer;">';
-          html += '<span class="memo-line-text" onclick="editAgentMemoLineText(' + m.id + ', ' + j + ')">' + ln.text + '</span>';
+          html += '<span class="memo-line-text" onclick="editAgentMemoLineText(' + m.id + ', ' + j + ')">' + esc(ln.text) + '</span>';
           html += '<button onclick="deleteAgentMemoLine(' + m.id + ', ' + j + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
           html += '</div>';
         }
@@ -2328,7 +2385,7 @@
       var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
       var dl = document.createElement('a');
       dl.setAttribute("href", dataStr);
-      dl.setAttribute("download", "agenda_direction_sync_v9.json");
+      dl.setAttribute("download", "agenda_direction_sync_v11.json");
       dl.click();
     }
 
@@ -2338,7 +2395,9 @@
       var reader = new FileReader();
       reader.onload = function(e) {
         try {
-          appData = JSON.parse(e.target.result);
+          if (!confirm("Remplacer toutes les données partagées par ce fichier ? (Une sauvegarde de sécurité va être téléchargée)")) return;
+          exportData();
+          appData = normalize(JSON.parse(e.target.result));
           syncSave();
           alert("Données importées avec succès !");
         } catch(err) { alert("Fichier JSON invalide"); }
@@ -2347,16 +2406,27 @@
     }
 
     function forceResetCalendar() {
-      if (confirm("Réinitialiser toutes les données par défaut ?")) {
-        try { localStorage.removeItem('mb_live_data_v9'); } catch(e) {}
-        appData = defaultData;
+      if (prompt("Tape EFFACER pour réinitialiser tout l'agenda (une sauvegarde va être téléchargée)") === "EFFACER") {
+        exportData();
+        try { localStorage.removeItem('mb_live_data_v12'); } catch(e) {}
+        appData = normalize(defaultData);
         syncSave();
       }
     }
 
-    // Lancer météo et affichage initial
+    // Rafraîchissement automatique de l'agenda à minuit sans rechargement
+    var lastDayKey = formatDateKey(new Date());
+    setInterval(function(){
+      var k = formatDateKey(new Date());
+      if (k !== lastDayKey) {
+        lastDayKey = k;
+        renderAgenda();
+      }
+    }, 60000);
+
+    // Initialisation Météo & Rendu
     fetchParisWeather();
-    setInterval(fetchParisWeather, 30 * 60 * 1000); // Actualiser météo toutes les 30 min
+    setInterval(fetchParisWeather, 30 * 60 * 1000);
     applyTheme();
     renderAll();
   </script>
