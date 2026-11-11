@@ -346,27 +346,75 @@
       color: #38bdf8;
     }
 
-    /* Cartes Redimensionnables */
+    /* Cartes Redimensionnables & Barres de Défilement Visibles */
     .resizable-card {
       resize: vertical;
       overflow: hidden;
-      min-height: 240px;
-    }
-    .agenda-resizable-box {
-      min-height: 360px;
-      height: 480px;
-      max-height: 85vh;
-    }
-    .card-scroll-body {
-      flex: 1;
-      overflow-y: auto;
+      min-height: 200px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
-      padding-right: 4px;
     }
-    .card-scroll-body::-webkit-scrollbar { width: 6px; }
-    .card-scroll-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+    .agenda-resizable-box {
+      min-height: 320px;
+      height: 460px;
+      max-height: 85vh;
+    }
+    
+    /* Conteneurs de scroll interne garantis sur PC et Mobile */
+    .card-scroll-body, .scroll-internal {
+      flex: 1 1 auto;
+      min-height: 0; /* CRUCIAL pour forcer le scroll en flexbox */
+      max-height: 100%;
+      overflow-y: auto !important;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 6px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(56, 189, 248, 0.5) rgba(255, 255, 255, 0.05);
+    }
+
+    /* Style barre de défilement toujours visible et contrastée */
+    .card-scroll-body::-webkit-scrollbar,
+    .scroll-internal::-webkit-scrollbar,
+    .memo-lines::-webkit-scrollbar {
+      width: 7px;
+    }
+    .card-scroll-body::-webkit-scrollbar-track,
+    .scroll-internal::-webkit-scrollbar-track,
+    .memo-lines::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+    }
+    .card-scroll-body::-webkit-scrollbar-thumb,
+    .scroll-internal::-webkit-scrollbar-thumb,
+    .memo-lines::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.5);
+      border-radius: 8px;
+    }
+    .card-scroll-body::-webkit-scrollbar-thumb:hover,
+    .scroll-internal::-webkit-scrollbar-thumb:hover,
+    .memo-lines::-webkit-scrollbar-thumb:hover {
+      background: #38bdf8;
+    }
+
+    /* État étendu / réduit pour mobile */
+    .card.expanded, .grid-2col.expanded {
+      height: 520px !important;
+      max-height: 80vh !important;
+    }
+    .size-toggle-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--accent-color);
+      padding: 2px 7px;
+      font-size: 0.72rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .size-toggle-btn:hover { background: rgba(56, 189, 248, 0.2); }
 
     /* Lignes Agenda */
     .day-row {
@@ -456,6 +504,9 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .venue-events-title {
       font-size: 0.76rem;
@@ -504,7 +555,11 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      min-height: 100px;
+      min-height: 80px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+      -webkit-overflow-scrolling: touch;
     }
     .memo-line {
       display: flex;
@@ -629,6 +684,18 @@
     /* ================= RESPONSIVE MOBILE AMÉLIORÉ ================= */
     @media (max-width: 768px) {
       body { padding: 8px; gap: 10px; }
+      .resizable-card {
+        resize: none; /* Le redimensionnement tactile se fait via le bouton ↕ Taille */
+        min-height: 180px;
+        max-height: 380px;
+      }
+      .card.expanded, .grid-2col.expanded {
+        max-height: 75vh !important;
+        height: auto !important;
+      }
+      .card-scroll-body, .scroll-internal {
+        max-height: 280px;
+      }
       header {
         flex-direction: column;
         align-items: stretch;
@@ -709,15 +776,20 @@
     <div class="dashboard-container" id="dashboardContainer">
       
       <!-- BLOC 1 : Rappels Urgents -->
-      <div class="card urgent-banner" id="block-urgents" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+      <div class="card urgent-banner resizable-card" id="block-urgents" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)" style="min-height: 140px; max-height: 380px;">
         <div class="urgent-header">
           <div class="card-title-group">
             <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
             <div class="urgent-title" onclick="renameCustomBlock('urgents')">⚠️ RAPPELS IMPORTANTS & ÉCHÉANCES</div>
           </div>
-          <button onclick="openUrgentModal()" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajouter un rappel</button>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button onclick="toggleCardSize('block-urgents')" class="size-toggle-btn" title="Agrandir / Réduire la hauteur">↕ Taille</button>
+            <button onclick="openUrgentModal()" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajouter un rappel</button>
+          </div>
         </div>
-        <div class="urgent-items" id="urgentList"></div>
+        <div class="card-scroll-body" style="padding-top: 4px;">
+          <div class="urgent-items" id="urgentList"></div>
+        </div>
       </div>
 
       <!-- BLOC 2 : Prêts & RH (Grille 2 colonnes) -->
@@ -728,7 +800,7 @@
               <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
               <div class="card-title" onclick="renameCustomBlock('prets')">🔄 Prêts de matériel</div>
             </div>
-            <button onclick="openGenericModal('pret')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
+            <div style="display:flex; align-items:center; gap:6px;"><button onclick="toggleCardSize('block-prets-rh')" class="size-toggle-btn" title="Agrandir / Réduire">↕ Taille</button><button onclick="openGenericModal('pret')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button></div>
           </div>
           <div class="card-scroll-body">
             <ul class="item-list" id="pretsList"></ul>
@@ -756,7 +828,7 @@
             <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
             <div class="card-title" onclick="renameCustomBlock('agenda')">📅 Agenda Prévisionnel (35 jours glissants)</div>
           </div>
-          <div style="font-size: 0.75rem; color: #94a3b8;">Cliquer directement sur un jour pour modifier</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="font-size: 0.75rem; color: #94a3b8;">Cliquer directement sur un jour pour modifier</span><button onclick="toggleCardSize('block-agenda')" class="size-toggle-btn" title="Agrandir / Réduire">↕ Taille</button></div>
         </div>
         <div class="card-scroll-body" id="agendaScroll"></div>
       </div>
@@ -787,7 +859,7 @@
               <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
               <div class="card-title" onclick="renameCustomBlock('taches')">✅ Tâches & Missions</div>
             </div>
-            <button onclick="openGenericModal('tache')" class="primary" style="padding: 3px 8px; font-size: 0.72rem;">+ Tâche</button>
+            <div style="display:flex; align-items:center; gap:6px;"><button onclick="toggleCardSize('block-bottom-grid')" class="size-toggle-btn" title="Agrandir / Réduire">↕ Taille</button><button onclick="openGenericModal('tache')" class="primary" style="padding: 3px 8px; font-size: 0.72rem;">+ Tâche</button></div>
           </div>
           <div class="card-scroll-body">
             <ul class="item-list" id="tachesList"></ul>
@@ -1501,6 +1573,13 @@
         var el = document.getElementById(appData.blockOrder[i]);
         if (el) container.appendChild(el);
       }
+    }
+
+    
+    function toggleCardSize(elementId) {
+      var el = document.getElementById(elementId);
+      if (!el) return;
+      el.classList.toggle('expanded');
     }
 
     function resetBlockOrder() {
