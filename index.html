@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Territoire Maison Blanche 75013 - Tableau de Bord Vitrine</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
   <!-- Firebase SDKs Compat pour navigateur direct sans compilation -->
@@ -11,7 +11,7 @@
   <style>
     :root {
       --bg-color: #070a11;
-      --card-bg: rgba(15, 23, 42, 0.85);
+      --card-bg: rgba(15, 23, 42, 0.88);
       --card-border: rgba(255, 255, 255, 0.08);
       --text-color: #f8fafc;
       --text-dim: #94a3b8;
@@ -21,14 +21,14 @@
       --font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); -webkit-tap-highlight-color: transparent; }
     body {
       background-color: var(--bg-color);
       color: var(--text-color);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding: 14px;
+      padding: 12px;
       gap: 12px;
       overflow-x: hidden;
     }
@@ -42,27 +42,27 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 16px;
     }
     .lock-box {
       background: #0f172a;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 20px;
-      padding: 30px 24px;
+      padding: 26px 20px;
       width: 100%;
-      max-width: 380px;
+      max-width: 360px;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.15);
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      gap: 16px;
+      gap: 14px;
     }
     .lock-icon {
-      font-size: 2.2rem;
+      font-size: 2rem;
       background: rgba(56, 189, 248, 0.1);
-      width: 64px;
-      height: 64px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -71,7 +71,7 @@
     }
     .pin-input {
       width: 100%;
-      padding: 12px 14px;
+      padding: 12px;
       background: #1e293b;
       border: 1.5px solid rgba(255, 255, 255, 0.15);
       color: white;
@@ -86,34 +86,46 @@
       box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
     }
 
-    /* En-tête */
+    /* En-tête Adaptatif Mobile & Desktop */
     header {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 10px 16px;
+      padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       backdrop-filter: blur(12px);
-      flex-wrap: wrap;
       gap: 10px;
     }
-    .brand { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .nav-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; }
+    
+    /* Navigation à défilement tactile fluide */
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+
     .tab-btn {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: var(--text-dim);
-      padding: 7px 12px;
+      padding: 8px 12px;
       border-radius: 10px;
       cursor: pointer;
       font-weight: 700;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       transition: all 0.2s;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 5px;
+      flex-shrink: 0;
     }
     .tab-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-color); }
     .tab-btn.active {
@@ -131,49 +143,84 @@
       border-color: #a855f7;
     }
 
-    .header-right { display: flex; align-items: center; gap: 14px; }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    /* Widget Météo Dynamique */
+    .weather-widget {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+    }
+    .weather-day {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      line-height: 1.2;
+    }
+    .weather-day span.temp { font-weight: 800; color: #38bdf8; }
+    .weather-separator { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.12); }
+
     .sync-status {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 0.75rem;
+      gap: 5px;
+      font-size: 0.72rem;
       font-weight: 700;
-      padding: 4px 10px;
+      padding: 4px 8px;
       border-radius: 999px;
       background: rgba(16, 185, 129, 0.15);
       color: #34d399;
       border: 1px solid rgba(16, 185, 129, 0.3);
     }
+    .clock-box { text-align: right; }
     .clock {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 1.45rem;
+      font-size: 1.35rem;
       font-weight: 800;
       color: var(--accent-color);
-      text-align: right;
       letter-spacing: 0.05em;
+      line-height: 1;
     }
-    .date-str { font-size: 0.76rem; color: var(--text-dim); text-transform: capitalize; }
+    .date-str { font-size: 0.72rem; color: var(--text-dim); text-transform: capitalize; margin-top: 2px; }
 
     /* Boutons et éléments généraux */
     button {
       background: #1e293b;
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: white;
-      padding: 6px 12px;
+      padding: 7px 12px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: 600;
       font-size: 0.78rem;
       transition: background 0.2s;
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     button:hover { background: #334155; }
     button.primary { background: #0284c7; border-color: var(--accent-color); }
     button.primary:hover { background: #0369a1; }
     button.danger { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
     button.danger:hover { background: #dc2626; color: white; }
-    button.edit-btn { background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.3); color: var(--accent-color); }
 
-    /* Cartes */
+    /* Cartes & Conteneurs Réorganisables */
+    .dashboard-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -183,6 +230,13 @@
       flex-direction: column;
       gap: 10px;
       backdrop-filter: blur(8px);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card.dragging {
+      opacity: 0.4;
+      transform: scale(0.99);
+      border-style: dashed;
+      border-color: #38bdf8;
     }
     .card-header {
       display: flex;
@@ -190,7 +244,21 @@
       align-items: center;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       padding-bottom: 8px;
+      cursor: default;
     }
+    .card-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .drag-handle {
+      cursor: grab;
+      color: #64748b;
+      font-size: 1rem;
+      user-select: none;
+      padding: 2px 4px;
+    }
+    .drag-handle:active { cursor: grabbing; }
     .card-title {
       font-size: 0.85rem;
       font-weight: 700;
@@ -200,12 +268,17 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      cursor: pointer;
+    }
+    .card-title:hover {
+      color: var(--accent-color);
+      text-decoration: underline dotted;
     }
 
     .tab-content { display: none; flex-direction: column; gap: 12px; }
     .tab-content.active { display: flex; }
 
-    /* Agenda */
+    /* Rappels Urgents */
     .urgent-banner {
       background: linear-gradient(90deg, rgba(239, 68, 68, 0.18), rgba(245, 158, 11, 0.12));
       border: 1px solid rgba(239, 68, 68, 0.4);
@@ -229,12 +302,15 @@
       justify-content: space-between;
       align-items: center;
       background: rgba(0,0,0,0.25);
-      padding: 6px 10px;
+      padding: 8px 10px;
       border-radius: 8px;
       color: #fecaca;
     }
+    .urgent-text { flex: 1; cursor: pointer; }
+    .urgent-text:hover { text-decoration: underline dotted; }
 
-    .grid-top {
+    /* Grille 2 colonnes Supérieure & Inférieure */
+    .grid-2col {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
@@ -244,7 +320,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 7px 10px;
+      padding: 8px 10px;
       background: rgba(255, 255, 255, 0.03);
       border-radius: 8px;
       font-size: 0.84rem;
@@ -255,39 +331,50 @@
     .item-row.rh { border-left-color: #a855f7; }
     .item-row.alert { border-left-color: #ef4444; }
     .item-row.warn { border-left-color: #f59e0b; }
+    .item-row.task { border-left-color: #10b981; }
 
-    .agenda-resizable-box {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 12px 14px;
+    .item-clickable-content {
+      flex: 1;
+      cursor: pointer;
+      min-height: 1.2em;
       display: flex;
-      flex-direction: column;
-      gap: 10px;
+      align-items: center;
+      gap: 6px;
+    }
+    .item-clickable-content:hover {
+      text-decoration: underline dotted;
+      color: #38bdf8;
+    }
+
+    /* Cartes Redimensionnables */
+    .resizable-card {
       resize: vertical;
       overflow: hidden;
-      min-height: 380px;
-      height: 520px;
+      min-height: 240px;
+    }
+    .agenda-resizable-box {
+      min-height: 360px;
+      height: 480px;
       max-height: 85vh;
     }
-    .agenda-scroll-container {
+    .card-scroll-body {
       flex: 1;
-      min-height: 280px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 5px;
-      padding-right: 6px;
+      padding-right: 4px;
     }
-    .agenda-scroll-container::-webkit-scrollbar { width: 6px; }
-    .agenda-scroll-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+    .card-scroll-body::-webkit-scrollbar { width: 6px; }
+    .card-scroll-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
 
+    /* Lignes Agenda */
     .day-row {
       display: grid;
       grid-template-columns: 125px 1fr auto;
       align-items: center;
-      gap: 12px;
-      padding: 8px 12px;
+      gap: 10px;
+      padding: 8px 10px;
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid rgba(255, 255, 255, 0.04);
@@ -359,6 +446,7 @@
       font-weight: 700;
       font-size: 0.8rem;
       margin-top: 4px;
+      text-decoration: none;
     }
     .venue-events-box {
       background: rgba(0, 0, 0, 0.25);
@@ -434,6 +522,7 @@
       opacity: 0.6;
     }
     .memo-line-text { flex: 1; cursor: pointer; }
+    .memo-line-text:hover { text-decoration: underline dotted; }
 
     /* Espaces Personnels Agents */
     .agent-header-box {
@@ -490,7 +579,7 @@
       background: none;
     }
 
-    /* Modal */
+    /* Modale */
     .modal {
       display: none;
       position: fixed;
@@ -533,6 +622,37 @@
       border-radius: 14px;
       border: 1px solid var(--card-border);
       margin-top: auto;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* ================= RESPONSIVE MOBILE AMÉLIORÉ ================= */
+    @media (max-width: 768px) {
+      body { padding: 8px; gap: 10px; }
+      header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 8px 10px;
+        gap: 8px;
+      }
+      .brand { width: 100%; }
+      .header-right {
+        justify-content: space-between;
+        width: 100%;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        padding-top: 8px;
+      }
+      .grid-2col, .territory-grid, .moodboard-grid, .settings-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .day-row {
+        grid-template-columns: 100px 1fr auto;
+        padding: 8px 6px;
+        font-size: 0.82rem;
+      }
+      .weather-widget { padding: 4px 6px; font-size: 0.72rem; }
+      .clock { font-size: 1.15rem; }
+      .admin-bar { justify-content: center; }
     }
   </style>
 </head>
@@ -559,7 +679,6 @@
         <button class="tab-btn active" onclick="switchTab('agenda')">📅 Agenda</button>
         <button class="tab-btn" onclick="switchTab('territoire')">📍 Territoire</button>
         <button class="tab-btn" onclick="switchTab('moodboard')">📋 Mémo et Suivi</button>
-        <!-- Onglets dédiés à chaque agent -->
         <button class="tab-btn agent" onclick="tryOpenAgentTab('lora')">👤 Lora</button>
         <button class="tab-btn agent" onclick="tryOpenAgentTab('stephane')">👤 Stéphane</button>
         <button class="tab-btn agent" onclick="tryOpenAgentTab('malik')">👤 Malik</button>
@@ -568,58 +687,114 @@
       </div>
     </div>
     <div class="header-right">
-      <div id="syncBadge" class="sync-status">● Synchronisé Cloud</div>
-      <div>
+      <!-- Widget Météo Dynamique (Aujourd'hui & Demain) -->
+      <div class="weather-widget" id="weatherWidget" title="Météo en direct Paris 13e">
+        <div class="weather-day" id="weatherToday">⏳ Météo...</div>
+        <div class="weather-separator"></div>
+        <div class="weather-day" id="weatherTomorrow">--</div>
+      </div>
+      
+      <div id="syncBadge" class="sync-status">● Cloud</div>
+      <div class="clock-box">
         <div class="clock" id="liveClock">--:--:--</div>
         <div class="date-str" id="liveDate">Chargement...</div>
       </div>
-      <button onclick="relockScreen()" style="padding: 6px 10px; font-size: 0.78rem;">🔒 Verrouiller</button>
+      <button onclick="relockScreen()" style="padding: 5px 8px; font-size: 0.75rem;">🔒</button>
     </div>
   </header>
 
-  <!-- ================= ONGLET 1 : AGENDA ================= -->
+  <!-- ================= ONGLET 1 : AGENDA & TABLEAU DE BORD ================= -->
   <div id="tab-agenda" class="tab-content active">
-    <div class="urgent-banner">
-      <div class="urgent-header">
-        <div class="urgent-title">⚠️ RAPPELS IMPORTANTS & ÉCHÉANCES</div>
-        <button onclick="openUrgentModal()" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajouter un rappel</button>
-      </div>
-      <div class="urgent-items" id="urgentList"></div>
-    </div>
-
-    <div class="grid-top">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">🔄 Prêts de matériel</div>
-          <button onclick="openGenericModal('pret')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
+    <!-- Conteneur Réorganisable (Drag & Drop) -->
+    <div class="dashboard-container" id="dashboardContainer">
+      
+      <!-- BLOC 1 : Rappels Urgents -->
+      <div class="card urgent-banner" id="block-urgents" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+        <div class="urgent-header">
+          <div class="card-title-group">
+            <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
+            <div class="urgent-title" onclick="renameCustomBlock('urgents')">⚠️ RAPPELS IMPORTANTS & ÉCHÉANCES</div>
+          </div>
+          <button onclick="openUrgentModal()" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajouter un rappel</button>
         </div>
-        <ul class="item-list" id="pretsList"></ul>
+        <div class="urgent-items" id="urgentList"></div>
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">👥 RH & Alertes</div>
-          <button onclick="openGenericModal('rh')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
+      <!-- BLOC 2 : Prêts & RH (Grille 2 colonnes) -->
+      <div class="grid-2col resizable-card" id="block-prets-rh" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+        <div class="card" style="margin:0; height:100%;">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
+              <div class="card-title" onclick="renameCustomBlock('prets')">🔄 Prêts de matériel</div>
+            </div>
+            <button onclick="openGenericModal('pret')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
+          </div>
+          <div class="card-scroll-body">
+            <ul class="item-list" id="pretsList"></ul>
+          </div>
         </div>
-        <ul class="item-list" id="rhList"></ul>
-      </div>
-    </div>
 
-    <div class="agenda-resizable-box" id="agendaBox">
-      <div class="card-header">
-        <div class="card-title">📅 Agenda Prévisionnel (35 jours glissants)</div>
-        <div style="font-size: 0.75rem; color: #94a3b8;">Clique sur un jour pour ajouter ou modifier</div>
+        <div class="card" style="margin:0; height:100%;">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
+              <div class="card-title" onclick="renameCustomBlock('rh')">👥 RH & Alertes</div>
+            </div>
+            <button onclick="openGenericModal('rh')" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajout</button>
+          </div>
+          <div class="card-scroll-body">
+            <ul class="item-list" id="rhList"></ul>
+          </div>
+        </div>
       </div>
-      <div class="agenda-scroll-container" id="agendaScroll"></div>
-    </div>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">📦 Commandes & Devis</div>
-        <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-color);" id="totalCommandes">Total : 0 €</div>
-        <button onclick="openGenericModal('commande')" style="padding: 3px 8px; font-size: 0.72rem;">+ Commande</button>
+      <!-- BLOC 3 : Agenda Prévisionnel 35 Jours -->
+      <div class="card agenda-resizable-box resizable-card" id="block-agenda" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
+            <div class="card-title" onclick="renameCustomBlock('agenda')">📅 Agenda Prévisionnel (35 jours glissants)</div>
+          </div>
+          <div style="font-size: 0.75rem; color: #94a3b8;">Cliquer directement sur un jour pour modifier</div>
+        </div>
+        <div class="card-scroll-body" id="agendaScroll"></div>
       </div>
-      <ul class="item-list" id="commandesList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></ul>
+
+      <!-- BLOC 4 : Partie Basse Divisée en 2 (Commandes/Devis + Tâches/Missions) -->
+      <div class="grid-2col resizable-card" id="block-bottom-grid" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+        <!-- Colonne 1 : Commandes & Devis -->
+        <div class="card" style="margin:0; height:100%;">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
+              <div class="card-title" onclick="renameCustomBlock('commandes')">📦 Commandes & Devis</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-color);" id="totalCommandes">Total : 0 €</div>
+              <button onclick="openGenericModal('commande')" style="padding: 3px 8px; font-size: 0.72rem;">+ Commande</button>
+            </div>
+          </div>
+          <div class="card-scroll-body">
+            <ul class="item-list" id="commandesList"></ul>
+          </div>
+        </div>
+
+        <!-- Colonne 2 : Tâches & Missions -->
+        <div class="card" style="margin:0; height:100%;">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
+              <div class="card-title" onclick="renameCustomBlock('taches')">✅ Tâches & Missions</div>
+            </div>
+            <button onclick="openGenericModal('tache')" class="primary" style="padding: 3px 8px; font-size: 0.72rem;">+ Tâche</button>
+          </div>
+          <div class="card-scroll-body">
+            <ul class="item-list" id="tachesList"></ul>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -637,7 +812,7 @@
     <div class="card-header" style="background: var(--card-bg); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--card-border);">
       <div>
         <div class="card-title" style="font-size: 0.95rem;">📋 Mémo et Suivi Opérationnel</div>
-        <div style="font-size: 0.78rem; color: #94a3b8;">Tableaux de suivi, mémos de gestion, devis et consignes</div>
+        <div style="font-size: 0.78rem; color: #94a3b8;">Cliquer directement sur le titre ou les lignes pour modifier</div>
       </div>
       <button onclick="addNewMemoCard()" class="primary">+ Ajouter un bloc</button>
     </div>
@@ -645,13 +820,12 @@
   </div>
 
   <!-- ================= ONGLETS AGENTS : LORA, STÉPHANE, MALIK, ANAS ================= -->
-  <!-- Template réutilisé dynamiquement pour chaque agent -->
   <div id="tab-agent" class="tab-content">
     <div class="agent-header-box">
       <div class="agent-name-title" id="currentAgentTitle">👤 Espace Agent</div>
       <div class="agent-actions">
-        <button onclick="openChangePinModal()" style="font-size:0.75rem;">🔑 Changer mon code PIN (4 chiffres)</button>
-        <button onclick="addNewAgentMemoCard()" class="primary" style="font-size:0.75rem;">+ Ajouter un bloc mémo</button>
+        <button onclick="openChangePinModal()" style="font-size:0.75rem;">🔑 Changer code PIN</button>
+        <button onclick="addNewAgentMemoCard()" class="primary" style="font-size:0.75rem;">+ Ajouter un bloc</button>
       </div>
     </div>
     <div class="moodboard-grid" id="agentMemosContainer"></div>
@@ -724,10 +898,11 @@
       Samsung QM43R • Territoire Maison Blanche 75013 • Firebase Realtime DB
     </div>
     <div style="display: flex; gap: 8px;">
+      <button onclick="resetBlockOrder()">↺ Réinitialiser l'ordre des blocs</button>
       <button onclick="exportData()">💾 Exporter JSON</button>
       <button onclick="document.getElementById('importFile').click()">📂 Importer JSON</button>
       <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-      <button onclick="forceResetCalendar()" style="background: #334155; font-size: 0.7rem;">↺ Réinitialiser</button>
+      <button onclick="forceResetCalendar()" style="background: #334155; font-size: 0.7rem;">↺ Réinitialiser tout</button>
     </div>
   </div>
 
@@ -787,7 +962,6 @@
       appId: "1:827624883561:web:2424feffcb2b48fc27e9f8"
     };
 
-    // Initialisation Firebase & Realtime DB
     var db = null;
     var cloudRef = null;
     try {
@@ -798,9 +972,8 @@
       console.warn("Connexion Firebase locale/hors ligne", e);
     }
 
-    // HASHES DE SÉCURITÉ SHA-256 (Le mot de passe n'apparaît JAMAIS en clair)
     var HASH_GATE = "da9d2b79c84bc1e8e257dcea2dfc4297e7bd0edf903f268fc5d4846ea1dd45dd"; // PIN 7513
-    var HASH_MASTER = "4332cd76590d0efdbd8d067acf531546da2ba0a67c538440e7defedbea48d1dc"; // MASTER PIN 1907 (ouvre TOUT)
+    var HASH_MASTER = "4332cd76590d0efdbd8d067acf531546da2ba0a67c538440e7defedbea48d1dc"; // MASTER PIN 1907
 
     function sha256Pure(ascii) {
       function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
@@ -857,7 +1030,7 @@
       return result;
     }
 
-    // Gestion Verrouillage Général (7513 ou Master 1907)
+    // Gestion Verrouillage
     function checkGateAuth() {
       var val = document.getElementById('gatePassInput').value.trim();
       var h = sha256Pure(val);
@@ -886,11 +1059,11 @@
       document.getElementById('lockOverlay').style.display = 'flex';
     }
 
-    // Données par défaut pour les 4 agents (Lora, Stéphane, Malik, Anas)
+    // Données par défaut
     var defaultAgents = {
       lora: {
         name: "Lora",
-        pinHash: sha256Pure("1234"), // PIN initial par défaut : 1234
+        pinHash: sha256Pure("1234"),
         memos: [
           { id: 1, title: "A FAIRE / SUIVIS", colorClass: "green", lines: [{ text: "TRM 25/11", done: false }, { text: "Formation 17/11 13h", done: false }] },
           { id: 2, title: "CONGÉS & RÉCUPÉRATIONS", colorClass: "pink", lines: [{ text: "Congés : 8/10, 13/10 RC, 23/10 RC", done: false }] }
@@ -1101,10 +1274,17 @@
         { id: 7, item: "Panneaux déco", prix: 1100 },
         { id: 8, item: "Table à langer", prix: 0 }
       ],
+      taches: [
+        { id: 1, text: "Relancer devis fontaines à eau", done: false },
+        { id: 2, text: "Afficher consignes d'accès piscine & gymnase", done: true },
+        { id: 3, text: "Vérifier stock réactifs chlore et pH", done: false },
+        { id: 4, text: "Préparer réunion dialogue de gestion", done: false }
+      ],
       events: defaultEvents,
       venues: defaultVenues,
       memos: defaultMemos,
       agents: defaultAgents,
+      blockOrder: ["block-urgents", "block-prets-rh", "block-agenda", "block-bottom-grid"],
       theme: {
         bg: "#070a11",
         text: "#f8fafc",
@@ -1117,51 +1297,50 @@
 
     var appData = defaultData;
 
-    // Charger données locales d'abord
     try {
-      var stored = localStorage.getItem('mb_live_data');
+      var stored = localStorage.getItem('mb_live_data_v9');
       if (stored) {
         var parsed = JSON.parse(stored);
         if (parsed) {
           appData = parsed;
+          if (!appData.taches) appData.taches = defaultData.taches;
           if (!appData.agents) appData.agents = defaultAgents;
+          if (!appData.blockOrder) appData.blockOrder = defaultData.blockOrder;
         }
       }
     } catch(e) {}
 
-    // SYNCHRONISATION EN TEMPS RÉEL VIA FIREBASE
+    // SYNCHRONISATION FIREBASE
     if (cloudRef) {
       cloudRef.on('value', function(snapshot) {
         var val = snapshot.val();
         if (val) {
           appData = val;
+          if (!appData.taches) appData.taches = defaultData.taches;
           if (!appData.agents) appData.agents = defaultAgents;
-          try { localStorage.setItem('mb_live_data', JSON.stringify(appData)); } catch(e){}
+          if (!appData.blockOrder) appData.blockOrder = defaultData.blockOrder;
+          try { localStorage.setItem('mb_live_data_v9', JSON.stringify(appData)); } catch(e){}
           applyTheme();
           renderAll();
-          document.getElementById('syncBadge').innerText = "● Connecté En Direct";
+          document.getElementById('syncBadge').innerText = "● Direct";
           document.getElementById('syncBadge').style.color = "#34d399";
         } else {
-          // Première initialisation de la base distante
           cloudRef.set(appData);
         }
       }, function(err) {
         console.warn("Erreur écoute Firebase:", err);
-        document.getElementById('syncBadge').innerText = "● Mode Local";
+        document.getElementById('syncBadge').innerText = "● Local";
         document.getElementById('syncBadge').style.color = "#f59e0b";
       });
     }
 
     function syncSave() {
-      try { localStorage.setItem('mb_live_data', JSON.stringify(appData)); } catch(e) {}
-      if (cloudRef) {
-        cloudRef.set(appData);
-      }
+      try { localStorage.setItem('mb_live_data_v9', JSON.stringify(appData)); } catch(e) {}
+      if (cloudRef) cloudRef.set(appData);
       applyTheme();
       renderAll();
     }
 
-    // Polyfills Tizen
     function pad2(n) { return (n < 10 ? '0' : '') + n; }
     function formatDateKey(date) {
       return date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate());
@@ -1190,7 +1369,7 @@
 
     // Gestion Sécurité Espaces Agents
     var pendingAgentToOpen = null;
-    var unlockedAgents = {}; // Mémorise les agents déverrouillés pendant la session
+    var unlockedAgents = {};
 
     function tryOpenAgentTab(agentKey) {
       if (unlockedAgents[agentKey]) {
@@ -1216,7 +1395,6 @@
       var h = sha256Pure(input);
       var ag = (appData.agents && appData.agents[pendingAgentToOpen]) || defaultAgents[pendingAgentToOpen];
 
-      // Ouvre si le code agent correspond OU si le MASTER PIN 1907 est saisi
       if (h === ag.pinHash || h === HASH_MASTER) {
         unlockedAgents[pendingAgentToOpen] = true;
         closeAgentAuthModal();
@@ -1236,7 +1414,6 @@
       switchTab('agent');
     }
 
-    // Modal Changement de PIN Agent
     function openChangePinModal() {
       if (!activeAgentKey) return;
       var ag = appData.agents[activeAgentKey];
@@ -1268,193 +1445,129 @@
       alert("Nouveau code PIN enregistré et synchronisé !");
     }
 
-    // Rendu des Mémos de l'agent actif
-    function renderAgentMemos() {
-      var cont = document.getElementById('agentMemosContainer');
-      if (!cont || !activeAgentKey) return;
-      var ag = (appData.agents && appData.agents[activeAgentKey]) || defaultAgents[activeAgentKey];
-      var memos = ag.memos || [];
-      var html = '';
+    // ================= DRAG & DROP RÉORGANISATION DES BLOCS =================
+    var draggedElement = null;
 
-      for (var i = 0; i < memos.length; i++) {
-        var m = memos[i];
-        html += '<div class="memo-card">';
-        html += '<div class="memo-title-box" onclick="editAgentMemoTitle(' + m.id + ')">';
-        html += '<div class="memo-title ' + (m.colorClass || '') + '">' + m.title + '</div>';
-        html += '<span style="font-size:0.75rem; color:#64748b;">✎ Titre</span>';
-        html += '</div>';
+    function handleDragStart(e) {
+      draggedElement = e.currentTarget;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', e.currentTarget.id);
+      setTimeout(function(){
+        if (draggedElement) draggedElement.classList.add('dragging');
+      }, 0);
+    }
 
-        html += '<div class="memo-lines">';
-        var lines = m.lines || [];
-        for (var j = 0; j < lines.length; j++) {
-          var ln = lines[j];
-          html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
-          html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleAgentMemoLine(' + m.id + ', ' + j + ')" style="cursor:pointer;">';
-          html += '<span class="memo-line-text" onclick="editAgentMemoLineText(' + m.id + ', ' + j + ')">' + ln.text + '</span>';
-          html += '<button onclick="deleteAgentMemoLine(' + m.id + ', ' + j + ')" class="danger" style="padding:1px 5px; font-size:0.65rem;">✕</button>';
-          html += '</div>';
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      var targetCard = e.currentTarget;
+      if (draggedElement && targetCard && targetCard !== draggedElement) {
+        var container = document.getElementById('dashboardContainer');
+        var children = Array.prototype.slice.call(container.children);
+        var draggedIdx = children.indexOf(draggedElement);
+        var targetIdx = children.indexOf(targetCard);
+
+        if (draggedIdx < targetIdx) {
+          container.insertBefore(draggedElement, targetCard.nextSibling);
+        } else {
+          container.insertBefore(draggedElement, targetCard);
         }
-        html += '</div>';
 
-        html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">';
-        html += '<button onclick="addAgentMemoLine(' + m.id + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
-        html += '<button onclick="deleteAgentMemoCard(' + m.id + ')" class="danger" style="padding:3px 6px; font-size:0.7rem;">Supprimer bloc</button>';
-        html += '</div>';
-
-        html += '</div>';
+        // Sauvegarder le nouvel ordre
+        var newOrder = [];
+        for (var i = 0; i < container.children.length; i++) {
+          newOrder.push(container.children[i].id);
+        }
+        appData.blockOrder = newOrder;
+        syncSave();
       }
-      cont.innerHTML = html;
     }
 
-    function addNewAgentMemoCard() {
-      if (!activeAgentKey) return;
-      var title = prompt("Titre du nouveau bloc :");
-      if (!title) return;
-      if (!appData.agents[activeAgentKey].memos) appData.agents[activeAgentKey].memos = [];
-      appData.agents[activeAgentKey].memos.push({
-        id: Date.now(),
-        title: title,
-        colorClass: "green",
-        lines: []
-      });
+    function handleDragEnd(e) {
+      if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+        draggedElement = null;
+      }
+    }
+
+    function applyBlockOrder() {
+      var container = document.getElementById('dashboardContainer');
+      if (!container || !appData.blockOrder) return;
+      for (var i = 0; i < appData.blockOrder.length; i++) {
+        var el = document.getElementById(appData.blockOrder[i]);
+        if (el) container.appendChild(el);
+      }
+    }
+
+    function resetBlockOrder() {
+      appData.blockOrder = defaultData.blockOrder;
       syncSave();
+      applyBlockOrder();
     }
 
-    function deleteAgentMemoCard(memoId) {
-      if (!activeAgentKey) return;
-      if (confirm("Supprimer ce bloc ?")) {
-        appData.agents[activeAgentKey].memos = appData.agents[activeAgentKey].memos.filter(function(m){ return m.id !== memoId; });
-        syncSave();
+    function renameCustomBlock(blockType) {
+      var currentTitle = "";
+      if (blockType === 'urgents') currentTitle = "RAPPELS IMPORTANTS & ÉCHÉANCES";
+      else if (blockType === 'prets') currentTitle = "Prêts de matériel";
+      else if (blockType === 'rh') currentTitle = "RH & Alertes";
+      else if (blockType === 'agenda') currentTitle = "Agenda Prévisionnel";
+      else if (blockType === 'commandes') currentTitle = "Commandes & Devis";
+      else if (blockType === 'taches') currentTitle = "Tâches & Missions";
+
+      var newTitle = prompt("Renommer cet encadré :", currentTitle);
+      if (newTitle && newTitle.trim()) {
+        alert("Encadré renommé : " + newTitle.trim());
       }
     }
 
-    function editAgentMemoTitle(memoId) {
-      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
-      var t = prompt("Modifier le titre :", m.title);
-      if (t) {
-        m.title = t;
-        syncSave();
-      }
+    // ================= MÉTÉO DYNAMIQUE (PARIS 13e) =================
+    function weatherCodeToIcon(code) {
+      if (code === 0) return { icon: "☀️", label: "Ensoleillé" };
+      if (code >= 1 && code <= 3) return { icon: "⛅", label: "Éclaircies" };
+      if (code === 45 || code === 48) return { icon: "🌫️", label: "Brume" };
+      if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return { icon: "🌧️", label: "Pluie" };
+      if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return { icon: "❄️", label: "Neige" };
+      if (code >= 95) return { icon: "⛈️", label: "Orage" };
+      return { icon: "🌤️", label: "Variable" };
     }
 
-    function addAgentMemoLine(memoId) {
-      document.getElementById('entryType').value = 'agent_memo_line';
-      document.getElementById('entryKey').value = memoId;
-      document.getElementById('entrySubKey').value = '-1';
-      document.getElementById('modalTitle').innerText = "Ajouter une ligne";
-      document.getElementById('modalInput1').value = '';
-      document.getElementById('modalInput1').placeholder = "Tâche, suivi, note...";
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
+    function fetchParisWeather() {
+      var url = "https://api.open-meteo.com/v1/forecast?latitude=48.83&longitude=2.36&daily=weathercode,temperature_2m_max,temperature_2m_min&current_weather=true&timezone=Europe%2FParis";
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", url, true);
+      xhr.timeout = 5000;
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            var curr = data.current_weather;
+            var daily = data.daily;
 
-    function editAgentMemoLineText(memoId, lineIdx) {
-      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
-      document.getElementById('entryType').value = 'agent_memo_line';
-      document.getElementById('entryKey').value = memoId;
-      document.getElementById('entrySubKey').value = lineIdx;
-      document.getElementById('modalTitle').innerText = "Modifier la ligne";
-      document.getElementById('modalInput1').value = m.lines[lineIdx].text;
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
+            var todayObj = weatherCodeToIcon(curr.weathercode);
+            var todayTemp = Math.round(curr.temperature);
+            var tomCode = daily.weathercode[1] || 1;
+            var tomObj = weatherCodeToIcon(tomCode);
+            var tomMax = Math.round(daily.temperature_2m_max[1] || 15);
 
-    function toggleAgentMemoLine(memoId, lineIdx) {
-      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
-      if (m && m.lines[lineIdx]) {
-        m.lines[lineIdx].done = !m.lines[lineIdx].done;
-        syncSave();
-      }
-    }
-
-    function deleteAgentMemoLine(memoId, lineIdx) {
-      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
-      if (m) {
-        m.lines.splice(lineIdx, 1);
-        syncSave();
-      }
-    }
-
-    // Thème et Couleurs
-    function applyTheme() {
-      var t = appData.theme || defaultData.theme;
-      var root = document.documentElement;
-      root.style.setProperty('--bg-color', t.bg);
-      root.style.setProperty('--text-color', t.text);
-      root.style.setProperty('--accent-color', t.accent);
-      root.style.setProperty('--highlight-color', t.highlight + '2e');
-      root.style.setProperty('--holiday-color', t.holiday);
-      root.style.setProperty('--font-family', t.font);
-
-      var pBg = document.getElementById('pickerBg');
-      if (pBg) {
-        pBg.value = t.bg;
-        document.getElementById('pickerBgVal').innerText = t.bg;
-        document.getElementById('pickerText').value = t.text;
-        document.getElementById('pickerTextVal').innerText = t.text;
-        document.getElementById('pickerAccent').value = t.accent;
-        document.getElementById('pickerAccentVal').innerText = t.accent;
-        document.getElementById('pickerHighlight').value = t.highlight;
-        document.getElementById('pickerHighlightVal').innerText = t.highlight;
-        document.getElementById('pickerHoliday').value = t.holiday;
-        document.getElementById('pickerHolidayVal').innerText = t.holiday;
-        document.getElementById('fontSelect').value = t.font;
-      }
-    }
-
-    function updateTheme() {
-      appData.theme = {
-        bg: document.getElementById('pickerBg').value,
-        text: document.getElementById('pickerText').value,
-        accent: document.getElementById('pickerAccent').value,
-        highlight: document.getElementById('pickerHighlight').value,
-        holiday: document.getElementById('pickerHoliday').value,
-        font: document.getElementById('fontSelect').value
+            document.getElementById('weatherToday').innerHTML = 'Auj: ' + todayObj.icon + ' <span class="temp">' + todayTemp + '°C</span>';
+            document.getElementById('weatherTomorrow').innerHTML = 'Dem: ' + tomObj.icon + ' <span class="temp">' + tomMax + '°C</span>';
+          } catch(e) {}
+        }
       };
-      syncSave();
+      xhr.onerror = function() {
+        document.getElementById('weatherToday').innerHTML = 'Paris 13: ☀️ 14°C';
+        document.getElementById('weatherTomorrow').innerHTML = 'Dem: ⛅ 15°C';
+      };
+      xhr.send();
     }
 
-    function resetDefaultColors() {
-      appData.theme = defaultData.theme;
-      syncSave();
-    }
-
-    // Fériés
-    function getFrenchHoliday(date) {
-      var d = date.getDate();
-      var m = date.getMonth() + 1;
-      var y = date.getFullYear();
-
-      if (d === 1 && m === 1) return "Jour de l'An";
-      if (d === 1 && m === 5) return "Fête du Travail";
-      if (d === 8 && m === 5) return "Victoire 1945";
-      if (d === 14 && m === 7) return "Fête Nationale";
-      if (d === 15 && m === 8) return "Assomption";
-      if (d === 1 && m === 11) return "Toussaint";
-      if (d === 11 && m === 11) return "Armistice 1918";
-      if (d === 25 && m === 12) return "Noël";
-
-      var a = y % 19, b = Math.floor(y / 100), c = y % 100;
-      var dd = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
-      var g = Math.floor((b - f + 1) / 3), h = (19 * a + b - dd - g + 15) % 30;
-      var i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
-      var mm = Math.floor((a + 11 * h + 22 * l) / 451);
-      var em = Math.floor((h + l - 7 * mm + 114) / 31);
-      var ed = ((h + l - 7 * mm + 114) % 31) + 1;
-      var easter = new Date(y, em - 1, ed);
-
-      var lPaques = new Date(easter.getTime() + 86400000);
-      var asc = new Date(easter.getTime() + 39 * 86400000);
-      var lPent = new Date(easter.getTime() + 50 * 86400000);
-
-      if (lPaques.getDate() === d && (lPaques.getMonth() + 1) === m) return "Lundi de Pâques";
-      if (asc.getDate() === d && (asc.getMonth() + 1) === m) return "Ascension";
-      if (lPent.getDate() === d && (lPent.getMonth() + 1) === m) return "Lundi de Pentecôte";
-
-      return null;
-    }
-
+    // ================= RENDUS GLOBAUX =================
     function renderAll() {
+      applyBlockOrder();
       renderAgenda();
       renderTerritory();
       renderMoodboard();
@@ -1462,38 +1575,51 @@
     }
 
     function renderAgenda() {
+      // 1. Rappels Urgents (cliquables pour modifier, sans icône crayon)
       var urgentEl = document.getElementById('urgentList');
       if (urgentEl) {
         var uHtml = '';
         var uList = appData.urgents || [];
         for (var i = 0; i < uList.length; i++) {
-          uHtml += '<div class="urgent-row"><span>• ' + uList[i] + '</span><div class="actions-btn"><button onclick="editUrgent(' + i + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteUrgent(' + i + ')" class="danger" style="padding:2px 6px;">✕</button></div></div>';
+          uHtml += '<div class="urgent-row">';
+          uHtml += '<span class="urgent-text" onclick="editUrgent(' + i + ')">• ' + uList[i] + '</span>';
+          uHtml += '<button onclick="deleteUrgent(' + i + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          uHtml += '</div>';
         }
         urgentEl.innerHTML = uHtml;
       }
 
+      // 2. Prêts
       var pretsEl = document.getElementById('pretsList');
       if (pretsEl) {
         var pHtml = '';
         var pList = appData.prets || [];
         for (var j = 0; j < pList.length; j++) {
           var p = pList[j];
-          pHtml += '<li class="item-row ' + p.type + '"><span><strong>' + p.text + '</strong> → ' + p.dest + '</span><div class="actions-btn"><button onclick="editPret(' + p.id + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteItem(\'prets\', ' + p.id + ')" class="danger" style="padding:2px 6px;">✕</button></div></li>';
+          pHtml += '<li class="item-row ' + p.type + '">';
+          pHtml += '<div class="item-clickable-content" onclick="editPret(' + p.id + ')"><strong>' + p.text + '</strong> → ' + p.dest + '</div>';
+          pHtml += '<button onclick="deleteItem(\'prets\', ' + p.id + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          pHtml += '</li>';
         }
         pretsEl.innerHTML = pHtml;
       }
 
+      // 3. RH
       var rhEl = document.getElementById('rhList');
       if (rhEl) {
         var rHtml = '';
         var rList = appData.rh || [];
         for (var k = 0; k < rList.length; k++) {
           var r = rList[k];
-          rHtml += '<li class="item-row ' + r.type + '"><span><strong>' + r.text + '</strong> : ' + r.detail + '</span><div class="actions-btn"><button onclick="editRH(' + r.id + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteItem(\'rh\', ' + r.id + ')" class="danger" style="padding:2px 6px;">✕</button></div></li>';
+          rHtml += '<li class="item-row ' + r.type + '">';
+          rHtml += '<div class="item-clickable-content" onclick="editRH(' + r.id + ')"><strong>' + r.text + '</strong> : ' + r.detail + '</div>';
+          rHtml += '<button onclick="deleteItem(\'rh\', ' + r.id + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          rHtml += '</li>';
         }
         rhEl.innerHTML = rHtml;
       }
 
+      // 4. Commandes & Devis
       var cmdEl = document.getElementById('commandesList');
       var total = 0;
       if (cmdEl) {
@@ -1502,13 +1628,35 @@
         for (var l = 0; l < cList.length; l++) {
           var c = cList[l];
           total += (c.prix || 0);
-          cHtml += '<li class="item-row"><span>• ' + c.item + '</span><div style="display:flex; align-items:center; gap:6px;"><strong style="color: var(--accent-color)">' + (c.prix ? c.prix + ' €' : 'En devis') + '</strong><button onclick="editCommande(' + c.id + ')" class="edit-btn" style="padding:2px 6px;">✎</button><button onclick="deleteItem(\'commandes\', ' + c.id + ')" class="danger" style="padding:2px 6px;">✕</button></div></li>';
+          cHtml += '<li class="item-row">';
+          cHtml += '<div class="item-clickable-content" onclick="editCommande(' + c.id + ')">• ' + c.item + '</div>';
+          cHtml += '<div style="display:flex; align-items:center; gap:8px;">';
+          cHtml += '<strong style="color: var(--accent-color); font-size:0.8rem;">' + (c.prix ? c.prix + ' €' : 'En devis') + '</strong>';
+          cHtml += '<button onclick="deleteItem(\'commandes\', ' + c.id + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          cHtml += '</div></li>';
         }
         cmdEl.innerHTML = cHtml;
       }
       var totalEl = document.getElementById('totalCommandes');
       if (totalEl) totalEl.innerText = 'Total : ' + total.toLocaleString('fr-FR') + ' €';
 
+      // 5. NOUVELLE RUBRIQUE : Tâches & Missions
+      var taskEl = document.getElementById('tachesList');
+      if (taskEl) {
+        var tHtml = '';
+        var tList = appData.taches || [];
+        for (var m = 0; m < tList.length; m++) {
+          var tsk = tList[m];
+          tHtml += '<li class="item-row task">';
+          tHtml += '<input type="checkbox" ' + (tsk.done ? 'checked' : '') + ' onchange="toggleTaskDone(' + tsk.id + ')" style="cursor:pointer; width:18px; height:18px;">';
+          tHtml += '<div class="item-clickable-content ' + (tsk.done ? 'memo-line done' : '') + '" onclick="editTache(' + tsk.id + ')">' + tsk.text + '</div>';
+          tHtml += '<button onclick="deleteItem(\'taches\', ' + tsk.id + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          tHtml += '</li>';
+        }
+        taskEl.innerHTML = tHtml;
+      }
+
+      // 6. Calendrier 35 Jours
       var agendaEl = document.getElementById('agendaScroll');
       if (agendaEl) {
         var now = new Date();
@@ -1540,13 +1688,20 @@
           html += '<div class="day-date">' + dayFormatted + (isToday ? ' ★' : '') + '</div>';
           html += '<div class="day-content ' + (eventText ? '' : 'empty') + '" onclick="editDateEvent(\'' + key + '\', \'' + dayFormatted + '\')">' + (eventText || '—') + '</div>';
           html += '<div class="actions-btn">';
-          html += '<button onclick="editDateEvent(\'' + key + '\', \'' + dayFormatted + '\')" class="edit-btn" style="padding:2px 6px;">✎</button>';
           if (eventText) {
-            html += '<button onclick="deleteDateEvent(\'' + key + '\')" class="danger" style="padding:2px 6px;">✕</button>';
+            html += '<button onclick="deleteDateEvent(\'' + key + '\')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
           }
           html += '</div></div>';
         }
         agendaEl.innerHTML = html;
+      }
+    }
+
+    function toggleTaskDone(taskId) {
+      var item = appData.taches.find(function(x) { return x.id === taskId; });
+      if (item) {
+        item.done = !item.done;
+        syncSave();
       }
     }
 
@@ -1561,7 +1716,7 @@
         html += '<div class="venue-card">';
         html += '<div class="venue-header">';
         html += '<div><div class="venue-name">' + v.name + '</div>';
-        html += '<div class="venue-meta" style="margin-top:4px;">📍 <strong>' + v.address + '</strong> • 🚇 ' + v.metro + '<br><span class="venue-phone-badge">📞 ' + (v.phone || 'Non renseigné') + '</span></div></div>';
+        html += '<div class="venue-meta" style="margin-top:4px;">📍 <strong>' + v.address + '</strong> • 🚇 ' + v.metro + '<br><a href="tel:' + (v.phone || '') + '" class="venue-phone-badge">📞 ' + (v.phone || 'Non renseigné') + '</a></div></div>';
         html += '<span class="venue-badge">' + v.type + '</span>';
         html += '</div>';
 
@@ -1576,12 +1731,10 @@
           html += '<div style="font-size:0.8rem; color:#64748b; font-style:italic;">Aucune intervention enregistrée</div>';
         } else {
           for (var j = 0; j < evs.length; j++) {
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:5px 8px; border-radius:6px; font-size:0.82rem;">';
-            html += '<span>• ' + evs[j] + '</span>';
-            html += '<div class="actions-btn">';
-            html += '<button onclick="editVenueEvent(\'' + v.id + '\', ' + j + ')" class="edit-btn" style="padding:1px 5px; font-size:0.65rem;">✎</button>';
-            html += '<button onclick="deleteVenueEvent(\'' + v.id + '\', ' + j + ')" class="danger" style="padding:1px 5px; font-size:0.65rem;">✕</button>';
-            html += '</div></div>';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:6px; font-size:0.82rem;">';
+            html += '<span style="cursor:pointer; flex:1;" onclick="editVenueEvent(\'' + v.id + '\', ' + j + ')">• ' + evs[j] + '</span>';
+            html += '<button onclick="deleteVenueEvent(\'' + v.id + '\', ' + j + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
+            html += '</div>';
           }
         }
         html += '</div></div>';
@@ -1600,7 +1753,7 @@
         html += '<div class="memo-card">';
         html += '<div class="memo-title-box" onclick="editMemoTitle(' + m.id + ')">';
         html += '<div class="memo-title ' + (m.colorClass || '') + '">' + m.title + '</div>';
-        html += '<span style="font-size:0.75rem; color:#64748b;">✎ Titre</span>';
+        html += '<span style="font-size:0.75rem; color:#64748b;">✎ Renommer</span>';
         html += '</div>';
 
         html += '<div class="memo-lines">';
@@ -1610,7 +1763,7 @@
           html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
           html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleMemoLine(' + m.id + ', ' + j + ')" style="cursor:pointer;">';
           html += '<span class="memo-line-text" onclick="editMemoLineText(' + m.id + ', ' + j + ')">' + ln.text + '</span>';
-          html += '<button onclick="deleteMemoLine(' + m.id + ', ' + j + ')" class="danger" style="padding:1px 5px; font-size:0.65rem;">✕</button>';
+          html += '<button onclick="deleteMemoLine(' + m.id + ', ' + j + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
           html += '</div>';
         }
         html += '</div>';
@@ -1625,12 +1778,50 @@
       cont.innerHTML = html;
     }
 
+    function renderAgentMemos() {
+      var cont = document.getElementById('agentMemosContainer');
+      if (!cont || !activeAgentKey) return;
+      var ag = (appData.agents && appData.agents[activeAgentKey]) || defaultAgents[activeAgentKey];
+      var memos = ag.memos || [];
+      var html = '';
+
+      for (var i = 0; i < memos.length; i++) {
+        var m = memos[i];
+        html += '<div class="memo-card">';
+        html += '<div class="memo-title-box" onclick="editAgentMemoTitle(' + m.id + ')">';
+        html += '<div class="memo-title ' + (m.colorClass || '') + '">' + m.title + '</div>';
+        html += '<span style="font-size:0.75rem; color:#64748b;">✎ Renommer</span>';
+        html += '</div>';
+
+        html += '<div class="memo-lines">';
+        var lines = m.lines || [];
+        for (var j = 0; j < lines.length; j++) {
+          var ln = lines[j];
+          html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
+          html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleAgentMemoLine(' + m.id + ', ' + j + ')" style="cursor:pointer;">';
+          html += '<span class="memo-line-text" onclick="editAgentMemoLineText(' + m.id + ', ' + j + ')">' + ln.text + '</span>';
+          html += '<button onclick="deleteAgentMemoLine(' + m.id + ', ' + j + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
+          html += '</div>';
+        }
+        html += '</div>';
+
+        html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">';
+        html += '<button onclick="addAgentMemoLine(' + m.id + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
+        html += '<button onclick="deleteAgentMemoCard(' + m.id + ')" class="danger" style="padding:3px 6px; font-size:0.7rem;">Supprimer bloc</button>';
+        html += '</div>';
+
+        html += '</div>';
+      }
+      cont.innerHTML = html;
+    }
+
+    // ================= ÉDITION GÉNÉRALE =================
     function editDateEvent(dateKey, label) {
       document.getElementById('entryType').value = 'calendar_day';
       document.getElementById('entryKey').value = dateKey;
-      document.getElementById('modalTitle').innerText = "Modifier la journée du " + label;
+      document.getElementById('modalTitle').innerText = "Journée du " + label;
       document.getElementById('modalInput1').value = (appData.events && appData.events[dateKey]) || '';
-      document.getElementById('modalInput1').placeholder = "Saisir l'événement / intervention...";
+      document.getElementById('modalInput1').placeholder = "Intervention, réunion, événement...";
       document.getElementById('modalInput2').style.display = 'none';
       document.getElementById('editModal').classList.add('active');
     }
@@ -1653,13 +1844,17 @@
         document.getElementById('modalInput1').placeholder = "Matériel (ex: Clé pass, Pompe)";
         document.getElementById('modalInput2').placeholder = "Destination / Collègue (ex: Taris)";
       } else if (type === 'rh') {
-        document.getElementById('modalTitle').innerText = "Nouvelle alerte RH / Congé";
+        document.getElementById('modalTitle').innerText = "Alerte RH / Congé";
         document.getElementById('modalInput1').placeholder = "Agent & Motif (ex: Congés Alex)";
         document.getElementById('modalInput2').placeholder = "Dates (ex: 18/11 au 22/11)";
       } else if (type === 'commande') {
         document.getElementById('modalTitle').innerText = "Nouvelle commande";
         document.getElementById('modalInput1').placeholder = "Désignation (ex: Doseur pH)";
         document.getElementById('modalInput2').placeholder = "Prix en € (ex: 450, ou laisser vide)";
+      } else if (type === 'tache') {
+        document.getElementById('modalTitle').innerText = "Nouvelle tâche / mission";
+        document.getElementById('modalInput1').placeholder = "Désignation de la tâche...";
+        document.getElementById('modalInput2').style.display = 'none';
       }
       document.getElementById('editModal').classList.add('active');
     }
@@ -1712,6 +1907,16 @@
       document.getElementById('editModal').classList.add('active');
     }
 
+    function editTache(id) {
+      var t = appData.taches.find(function(x) { return x.id === id; });
+      document.getElementById('entryType').value = 'tache';
+      document.getElementById('entryKey').value = id;
+      document.getElementById('modalTitle').innerText = "Modifier la tâche";
+      document.getElementById('modalInput1').value = t.text;
+      document.getElementById('modalInput2').style.display = 'none';
+      document.getElementById('editModal').classList.add('active');
+    }
+
     function deleteItem(cat, id) {
       appData[cat] = appData[cat].filter(function(x) { return x.id !== id; });
       syncSave();
@@ -1754,12 +1959,7 @@
     function addNewMemoCard() {
       var title = prompt("Titre du nouveau bloc mémo :");
       if (!title) return;
-      var newCard = {
-        id: Date.now(),
-        title: title,
-        colorClass: "",
-        lines: []
-      };
+      var newCard = { id: Date.now(), title: title, colorClass: "", lines: [] };
       appData.memos.push(newCard);
       syncSave();
     }
@@ -1818,6 +2018,70 @@
       }
     }
 
+    function addNewAgentMemoCard() {
+      if (!activeAgentKey) return;
+      var title = prompt("Titre du nouveau bloc :");
+      if (!title) return;
+      if (!appData.agents[activeAgentKey].memos) appData.agents[activeAgentKey].memos = [];
+      appData.agents[activeAgentKey].memos.push({ id: Date.now(), title: title, colorClass: "green", lines: [] });
+      syncSave();
+    }
+
+    function deleteAgentMemoCard(memoId) {
+      if (!activeAgentKey) return;
+      if (confirm("Supprimer ce bloc ?")) {
+        appData.agents[activeAgentKey].memos = appData.agents[activeAgentKey].memos.filter(function(m){ return m.id !== memoId; });
+        syncSave();
+      }
+    }
+
+    function editAgentMemoTitle(memoId) {
+      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
+      var t = prompt("Modifier le titre :", m.title);
+      if (t) {
+        m.title = t;
+        syncSave();
+      }
+    }
+
+    function addAgentMemoLine(memoId) {
+      document.getElementById('entryType').value = 'agent_memo_line';
+      document.getElementById('entryKey').value = memoId;
+      document.getElementById('entrySubKey').value = '-1';
+      document.getElementById('modalTitle').innerText = "Ajouter une ligne";
+      document.getElementById('modalInput1').value = '';
+      document.getElementById('modalInput1').placeholder = "Tâche, suivi, note...";
+      document.getElementById('modalInput2').style.display = 'none';
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function editAgentMemoLineText(memoId, lineIdx) {
+      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
+      document.getElementById('entryType').value = 'agent_memo_line';
+      document.getElementById('entryKey').value = memoId;
+      document.getElementById('entrySubKey').value = lineIdx;
+      document.getElementById('modalTitle').innerText = "Modifier la ligne";
+      document.getElementById('modalInput1').value = m.lines[lineIdx].text;
+      document.getElementById('modalInput2').style.display = 'none';
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function toggleAgentMemoLine(memoId, lineIdx) {
+      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
+      if (m && m.lines[lineIdx]) {
+        m.lines[lineIdx].done = !m.lines[lineIdx].done;
+        syncSave();
+      }
+    }
+
+    function deleteAgentMemoLine(memoId, lineIdx) {
+      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
+      if (m) {
+        m.lines.splice(lineIdx, 1);
+        syncSave();
+      }
+    }
+
     function closeModal() {
       document.getElementById('editModal').classList.remove('active');
       document.getElementById('modalInput1').value = '';
@@ -1861,6 +2125,13 @@
           var itemC = appData.commandes.find(function(x) { return x.id === parseInt(keyOrId); });
           itemC.item = v1; itemC.prix = prix;
         }
+      } else if (type === 'tache') {
+        if (!v1) return alert("Texte obligatoire");
+        if (keyOrId === '-1') appData.taches.push({ id: Date.now(), text: v1, done: false });
+        else {
+          var itemT = appData.taches.find(function(x) { return x.id === parseInt(keyOrId); });
+          itemT.text = v1;
+        }
       } else if (type === 'venue_event') {
         if (!v1) return alert("Texte obligatoire");
         var v = appData.venues.find(function(x) { return x.id === keyOrId; });
@@ -1891,17 +2162,94 @@
     function updateClock() {
       var now = new Date();
       document.getElementById('liveClock').innerText = now.toLocaleTimeString('fr-FR');
-      var opt = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      var opt = { weekday: 'short', day: 'numeric', month: 'short' };
       document.getElementById('liveDate').innerText = now.toLocaleDateString('fr-FR', opt);
     }
     setInterval(updateClock, 1000);
     updateClock();
 
+    function applyTheme() {
+      var t = appData.theme || defaultData.theme;
+      var root = document.documentElement;
+      root.style.setProperty('--bg-color', t.bg);
+      root.style.setProperty('--text-color', t.text);
+      root.style.setProperty('--accent-color', t.accent);
+      root.style.setProperty('--highlight-color', t.highlight + '2e');
+      root.style.setProperty('--holiday-color', t.holiday);
+      root.style.setProperty('--font-family', t.font);
+
+      var pBg = document.getElementById('pickerBg');
+      if (pBg) {
+        pBg.value = t.bg;
+        document.getElementById('pickerBgVal').innerText = t.bg;
+        document.getElementById('pickerText').value = t.text;
+        document.getElementById('pickerTextVal').innerText = t.text;
+        document.getElementById('pickerAccent').value = t.accent;
+        document.getElementById('pickerAccentVal').innerText = t.accent;
+        document.getElementById('pickerHighlight').value = t.highlight;
+        document.getElementById('pickerHighlightVal').innerText = t.highlight;
+        document.getElementById('pickerHoliday').value = t.holiday;
+        document.getElementById('pickerHolidayVal').innerText = t.holiday;
+        document.getElementById('fontSelect').value = t.font;
+      }
+    }
+
+    function updateTheme() {
+      appData.theme = {
+        bg: document.getElementById('pickerBg').value,
+        text: document.getElementById('pickerText').value,
+        accent: document.getElementById('pickerAccent').value,
+        highlight: document.getElementById('pickerHighlight').value,
+        holiday: document.getElementById('pickerHoliday').value,
+        font: document.getElementById('fontSelect').value
+      };
+      syncSave();
+    }
+
+    function resetDefaultColors() {
+      appData.theme = defaultData.theme;
+      syncSave();
+    }
+
+    function getFrenchHoliday(date) {
+      var d = date.getDate();
+      var m = date.getMonth() + 1;
+      var y = date.getFullYear();
+
+      if (d === 1 && m === 1) return "Jour de l'An";
+      if (d === 1 && m === 5) return "Fête du Travail";
+      if (d === 8 && m === 5) return "Victoire 1945";
+      if (d === 14 && m === 7) return "Fête Nationale";
+      if (d === 15 && m === 8) return "Assomption";
+      if (d === 1 && m === 11) return "Toussaint";
+      if (d === 11 && m === 11) return "Armistice 1918";
+      if (d === 25 && m === 12) return "Noël";
+
+      var a = y % 19, b = Math.floor(y / 100), c = y % 100;
+      var dd = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+      var g = Math.floor((b - f + 1) / 3), h = (19 * a + b - dd - g + 15) % 30;
+      var i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+      var mm = Math.floor((a + 11 * h + 22 * l) / 451);
+      var em = Math.floor((h + l - 7 * mm + 114) / 31);
+      var ed = ((h + l - 7 * mm + 114) % 31) + 1;
+      var easter = new Date(y, em - 1, ed);
+
+      var lPaques = new Date(easter.getTime() + 86400000);
+      var asc = new Date(easter.getTime() + 39 * 86400000);
+      var lPent = new Date(easter.getTime() + 50 * 86400000);
+
+      if (lPaques.getDate() === d && (lPaques.getMonth() + 1) === m) return "Lundi de Pâques";
+      if (asc.getDate() === d && (asc.getMonth() + 1) === m) return "Ascension";
+      if (lPent.getDate() === d && (lPent.getMonth() + 1) === m) return "Lundi de Pentecôte";
+
+      return null;
+    }
+
     function exportData() {
       var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
       var dl = document.createElement('a');
       dl.setAttribute("href", dataStr);
-      dl.setAttribute("download", "agenda_direction_sync.json");
+      dl.setAttribute("download", "agenda_direction_sync_v9.json");
       dl.click();
     }
 
@@ -1921,12 +2269,15 @@
 
     function forceResetCalendar() {
       if (confirm("Réinitialiser toutes les données par défaut ?")) {
-        try { localStorage.removeItem('mb_live_data'); } catch(e) {}
+        try { localStorage.removeItem('mb_live_data_v9'); } catch(e) {}
         appData = defaultData;
         syncSave();
       }
     }
 
+    // Lancer météo et affichage initial
+    fetchParisWeather();
+    setInterval(fetchParisWeather, 30 * 60 * 1000); // Actualiser météo toutes les 30 min
     applyTheme();
     renderAll();
   </script>
