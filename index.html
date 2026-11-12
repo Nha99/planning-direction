@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Territoire Maison Blanche 75013 - Tableau de Bord Vitrine</title>
+  <title>Territoire Maison Blanche 75013 - Tableau de Bord</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -198,7 +198,7 @@
       cursor: pointer;
       font-weight: 600;
       font-size: 0.78rem;
-      transition: background 0.2s;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
       min-height: 32px;
       display: inline-flex;
       align-items: center;
@@ -207,8 +207,25 @@
     button:hover { background: #334155; }
     button.primary { background: #0284c7; border-color: var(--accent-color); }
     button.primary:hover { background: #0369a1; }
-    button.danger { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
-    button.danger:hover { background: #dc2626; color: white; }
+
+    /* Bouton de suppression petit et discret assorti au fond bleu nuit */
+    button.del-btn {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(56, 189, 248, 0.14);
+      color: #475569;
+      padding: 1px 5px;
+      font-size: 0.68rem;
+      line-height: 1;
+      min-height: 20px;
+      min-width: 20px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+    button.del-btn:hover {
+      background: rgba(30, 41, 59, 0.95);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: #94a3b8;
+    }
 
     .dashboard-container {
       display: flex;
@@ -276,15 +293,16 @@
       text-decoration: underline dotted;
     }
 
+    /* Bloc alerte agrandi d'une ligne d'événements */
     .urgent-fixed-box {
-      height: 155px;
+      height: 198px;
       overflow: hidden;
     }
     .agenda-resizable-box {
       resize: vertical;
       overflow: hidden;
       min-height: 300px;
-      height: 460px;
+      height: 450px;
       max-height: 85vh;
     }
     .fixed-bottom-card {
@@ -360,6 +378,7 @@
       padding: 8px 10px;
       border-radius: 8px;
       color: #fecaca;
+      gap: 8px;
     }
     .urgent-text { flex: 1; cursor: pointer; }
     .urgent-text:hover { text-decoration: underline dotted; }
@@ -411,7 +430,7 @@
     .day-row.today {
       background: var(--highlight-color) !important;
       border: 1.5px solid var(--accent-color) !important;
-      box-shadow: 0 0 20px var(--accent-color);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
       opacity: 1 !important;
     }
     .day-row.today .day-date { color: var(--accent-color) !important; font-weight: 800; }
@@ -658,11 +677,24 @@
       gap: 8px;
     }
 
-    body.readonly-mode button:not(.tab-btn),
-    body.readonly-mode .drag-handle,
-    body.readonly-mode .admin-bar,
-    body.readonly-mode .tab-btn.agent,
-    body.readonly-mode .tab-btn[onclick*="parametres"] {
+    /* Mode Affichage Écran Vitrine :
+       - Garde uniquement l'onglet Agenda
+       - Conserve le déplacement et le redimensionnement de l'agenda
+       - Bloque uniquement l'ajout, l'édition et la suppression d'événements/données */
+    body.readonly-mode header,
+    body.readonly-mode .card {
+      backdrop-filter: none !important;
+      background: #0f172a !important;
+      box-shadow: none !important;
+    }
+    body.readonly-mode .day-row.today {
+      box-shadow: none !important;
+    }
+    body.readonly-mode .nav-tabs .tab-btn:not(#tabBtn-agenda) {
+      display: none !important;
+    }
+    body.readonly-mode button:not(.tab-btn):not(#relockBtn):not(#resetOrderBtn),
+    body.readonly-mode .admin-bar button:not(#resetOrderBtn) {
       display: none !important;
     }
     body.readonly-mode .item-clickable-content,
@@ -706,7 +738,7 @@
 </head>
 <body>
 
-  <!-- ÉCRAN DE CONNEXION SÉCURISÉ PAR PIN -->
+  <!-- ÉCRAN DE CONNEXION SÉCURISÉ PAR PIN (SANS MOT DE PASSE POUR ÉCRAN VITRINE) -->
   <div id="lockOverlay">
     <div class="lock-box">
       <div class="lock-icon">🔒</div>
@@ -714,7 +746,7 @@
         <div style="font-weight: 800; font-size: 1.15rem; color: #f8fafc; letter-spacing: 0.05em;">ACCÈS SÉCURISÉ</div>
         <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Territoire Maison Blanche 75013</div>
       </div>
-      <select id="userProfileSelect" style="padding: 10px; font-size: 0.88rem; background: #1e293b; color: white; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);">
+      <select id="userProfileSelect" onchange="onProfileSelectChange()" style="padding: 10px; font-size: 0.88rem; background: #1e293b; color: white; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);">
         <option value="direction">🏛️ Direction</option>
         <option value="ecran">📺 Écran Vitrine QM43R (Lecture seule)</option>
         <option value="lora">👤 Lora</option>
@@ -733,14 +765,14 @@
   <header>
     <div class="brand">
       <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('agenda', this)">📅 Agenda</button>
-        <button class="tab-btn" onclick="switchTab('territoire', this)">📍 Territoire</button>
-        <button class="tab-btn" onclick="switchTab('moodboard', this)">📋 Mémo et Suivi</button>
+        <button class="tab-btn active" id="tabBtn-agenda" onclick="switchTab('agenda', this)">📅 Agenda</button>
+        <button class="tab-btn" id="tabBtn-territoire" onclick="switchTab('territoire', this)">📍 Territoire</button>
+        <button class="tab-btn" id="tabBtn-moodboard" onclick="switchTab('moodboard', this)">📋 Mémo et Suivi</button>
         <button class="tab-btn agent" id="tabBtn-lora" onclick="tryOpenAgentTab('lora', this)">👤 Lora</button>
         <button class="tab-btn agent" id="tabBtn-stephane" onclick="tryOpenAgentTab('stephane', this)">👤 Stéphane</button>
         <button class="tab-btn agent" id="tabBtn-malik" onclick="tryOpenAgentTab('malik', this)">👤 Malik</button>
         <button class="tab-btn agent" id="tabBtn-anas" onclick="tryOpenAgentTab('anas', this)">👤 Anas</button>
-        <button class="tab-btn" onclick="switchTab('parametres', this)">⚙️ Paramètres</button>
+        <button class="tab-btn" id="tabBtn-parametres" onclick="switchTab('parametres', this)">⚙️ Paramètres</button>
       </div>
     </div>
     <div class="header-right">
@@ -755,7 +787,7 @@
         <div class="clock" id="liveClock">--:--:--</div>
         <div class="date-str" id="liveDate">Chargement...</div>
       </div>
-      <button onclick="relockScreen()" style="padding: 5px 8px; font-size: 0.75rem;" title="Se déconnecter">🔒</button>
+      <button id="relockBtn" onclick="relockScreen()" style="padding: 5px 8px; font-size: 0.75rem;" title="Se déconnecter">🔒</button>
     </div>
   </header>
 
@@ -763,7 +795,7 @@
   <div id="tab-agenda" class="tab-content active">
     <div class="dashboard-container" id="dashboardContainer">
       
-      <!-- 1. EN HAUT : Barre Rouge Rappels Urgents (Taille fixe) -->
+      <!-- 1. EN HAUT : Barre Rouge Rappels Urgents (agrandie d'une ligne) -->
       <div class="card urgent-banner urgent-fixed-box" id="block-urgents" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
         <div class="urgent-header">
           <div class="card-title-group">
@@ -777,7 +809,7 @@
         </div>
       </div>
 
-      <!-- 2. AU MILIEU : Agenda Prévisionnel 35 Jours (Seul bloc redimensionnable) -->
+      <!-- 2. AU MILIEU : Agenda Prévisionnel 35 Jours -->
       <div class="card agenda-resizable-box" id="block-agenda" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
         <div class="card-header">
           <div class="card-title-group">
@@ -789,7 +821,7 @@
         <div class="card-scroll-body" id="agendaScroll"></div>
       </div>
 
-      <!-- 3. EN BAS (Ligne 1) : Prêts de matériel & RH Alertes (Taille fixe + Scroll) -->
+      <!-- 3. EN BAS (Ligne 1) : Prêts de matériel & RH Alertes -->
       <div class="grid-2col" id="block-prets-rh" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
         <div class="card fixed-bottom-card">
           <div class="card-header">
@@ -818,7 +850,7 @@
         </div>
       </div>
 
-      <!-- 4. EN BAS (Ligne 2) : Commandes & Devis + Tâches & Missions (Taille fixe + Scroll) -->
+      <!-- 4. EN BAS (Ligne 2) : Commandes & Devis + Tâches & Missions -->
       <div class="grid-2col" id="block-bottom-grid" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
         <div class="card fixed-bottom-card">
           <div class="card-header">
@@ -952,7 +984,7 @@
       Samsung QM43R • Territoire Maison Blanche 75013 • Firebase Realtime DB
     </div>
     <div style="display: flex; gap: 8px;">
-      <button onclick="resetBlockOrder()">↺ Réinitialiser l'ordre des blocs</button>
+      <button id="resetOrderBtn" onclick="resetBlockOrder()">↺ Réinitialiser l'ordre des blocs</button>
       <button onclick="exportData()">💾 Exporter JSON</button>
       <button onclick="document.getElementById('importFile').click()">📂 Importer JSON</button>
       <input type="file" id="importFile" style="display:none" onchange="importData(event)">
@@ -999,7 +1031,7 @@
 
     function esc(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        return { '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[c];
       });
     }
 
@@ -1022,6 +1054,19 @@
     var isReadOnlyScreen = false;
     var syncInitialized = false;
 
+    function onProfileSelectChange() {
+      var prof = document.getElementById('userProfileSelect').value;
+      var pinInput = document.getElementById('gatePassInput');
+      var err = document.getElementById('gateErrorMsg');
+      err.style.display = 'none';
+      if (prof === 'ecran') {
+        pinInput.style.display = 'none';
+      } else {
+        pinInput.style.display = 'block';
+        pinInput.focus();
+      }
+    }
+
     function applyAccessPermissions(profile) {
       loggedProfile = profile;
       var agentKeys = ['lora', 'stephane', 'malik', 'anas'];
@@ -1042,15 +1087,35 @@
 
       if (activeAgentKey && profile !== 'master' && profile !== activeAgentKey) {
         activeAgentKey = null;
-        var agendaBtn = document.querySelector('.tab-btn[onclick*="agenda"]');
+        var agendaBtn = document.getElementById('tabBtn-agenda');
         switchTab('agenda', agendaBtn);
       }
+    }
+
+    function enterScreenModeDirectly() {
+      document.getElementById('lockOverlay').style.display = 'none';
+      isReadOnlyScreen = true;
+      document.body.classList.add('readonly-mode');
+      applyAccessPermissions('ecran');
+      var agendaBtn = document.getElementById('tabBtn-agenda');
+      switchTab('agenda', agendaBtn);
+      try { localStorage.setItem('mb_ecran_session', '1'); } catch(e) {}
+      initFirebaseSync();
     }
 
     function checkGateAuth() {
       var prof = document.getElementById('userProfileSelect').value;
       var pin = document.getElementById('gatePassInput').value.trim();
       var err = document.getElementById('gateErrorMsg');
+
+      if (prof === 'ecran') {
+        err.style.display = 'none';
+        if (auth) {
+          auth.signInWithEmailAndPassword(getProfileEmail('ecran'), pinToPass('ecran', '7513')).catch(function(){});
+        }
+        enterScreenModeDirectly();
+        return;
+      }
 
       if (!/^[0-9]{4}$/.test(pin)) {
         err.innerText = "Veuillez entrer un code à 4 chiffres.";
@@ -1070,6 +1135,7 @@
       auth.signInWithEmailAndPassword(email, password)
         .then(function() {
           err.style.display = 'none';
+          try { localStorage.removeItem('mb_ecran_session'); } catch(e) {}
           document.getElementById('gatePassInput').value = '';
           document.getElementById('lockOverlay').style.display = 'none';
         })
@@ -1089,16 +1155,24 @@
 
     function relockScreen() {
       if (auth) auth.signOut();
+      try { localStorage.removeItem('mb_ecran_session'); } catch(e) {}
       syncInitialized = false;
       loggedProfile = null;
       activeAgentKey = null;
+      isReadOnlyScreen = false;
+      document.body.classList.remove('readonly-mode');
       document.getElementById('gatePassInput').value = '';
       document.getElementById('gateErrorMsg').style.display = 'none';
       document.getElementById('lockOverlay').style.display = 'flex';
-      document.getElementById('gatePassInput').focus();
+      onProfileSelectChange();
     }
 
-    if (auth) {
+    var wasEcranSession = false;
+    try { wasEcranSession = localStorage.getItem('mb_ecran_session') === '1'; } catch(e) {}
+
+    if (wasEcranSession) {
+      enterScreenModeDirectly();
+    } else if (auth) {
       auth.onAuthStateChanged(function(user) {
         if (user) {
           document.getElementById('lockOverlay').style.display = 'none';
@@ -1108,16 +1182,13 @@
           document.body.classList.toggle('readonly-mode', isReadOnlyScreen);
           applyAccessPermissions(prof);
           initFirebaseSync();
-        } else {
+        } else if (!isReadOnlyScreen) {
           syncInitialized = false;
           loggedProfile = null;
           document.getElementById('lockOverlay').style.display = 'flex';
           if (cloudRef) cloudRef.off();
         }
       });
-    } else {
-      document.getElementById('gateErrorMsg').innerText = "Connexion réseau requise pour authentifier le code PIN.";
-      document.getElementById('gateErrorMsg').style.display = 'block';
     }
 
     var defaultAgents = {
@@ -1407,7 +1478,7 @@
     var appData = normalize(defaultData);
 
     try {
-      var stored = localStorage.getItem('mb_live_data_v13');
+      var stored = localStorage.getItem('mb_live_data_v16');
       if (stored) appData = normalize(JSON.parse(stored));
     } catch(e) {}
 
@@ -1418,7 +1489,7 @@
         var val = snapshot.val();
         if (val) {
           appData = normalize(val);
-          try { localStorage.setItem('mb_live_data_v13', JSON.stringify(appData)); } catch(e){}
+          try { localStorage.setItem('mb_live_data_v16', JSON.stringify(appData)); } catch(e){}
           applyTheme();
           renderAll();
           document.getElementById('syncBadge').innerText = "● Direct";
@@ -1428,14 +1499,15 @@
         }
       }, function(err) {
         console.warn("Erreur écoute Firebase:", err);
-        document.getElementById('syncBadge').innerText = "● Verrouillé";
+        document.getElementById('syncBadge').innerText = "● Local";
         document.getElementById('syncBadge').style.color = "#f59e0b";
       });
     }
 
     function syncSave() {
-      try { localStorage.setItem('mb_live_data_v13', JSON.stringify(appData)); } catch(e) {}
-      if (cloudRef && !isReadOnlyScreen) cloudRef.set(appData);
+      if (isReadOnlyScreen) return;
+      try { localStorage.setItem('mb_live_data_v16', JSON.stringify(appData)); } catch(e) {}
+      if (cloudRef) cloudRef.set(appData);
       applyTheme();
       renderAll();
     }
@@ -1474,6 +1546,7 @@
       switchTab('agent', btnEl);
     }
 
+    // Déplacement des blocs autorisé sur tous les modes (y compris l'écran vitrine)
     var draggedElement = null;
 
     function handleDragStart(e) {
@@ -1510,7 +1583,8 @@
           newOrder.push(container.children[i].id);
         }
         appData.blockOrder = newOrder;
-        syncSave();
+        try { localStorage.setItem('mb_live_data_v16', JSON.stringify(appData)); } catch(err) {}
+        if (!isReadOnlyScreen && cloudRef) cloudRef.set(appData);
       }
     }
 
@@ -1532,11 +1606,13 @@
 
     function resetBlockOrder() {
       appData.blockOrder = ["block-urgents", "block-agenda", "block-prets-rh", "block-bottom-grid"];
-      syncSave();
+      try { localStorage.setItem('mb_live_data_v16', JSON.stringify(appData)); } catch(e) {}
+      if (!isReadOnlyScreen && cloudRef) cloudRef.set(appData);
       applyBlockOrder();
     }
 
     function renameCustomBlock(blockType) {
+      if (isReadOnlyScreen) return;
       var current = (appData.customTitles && appData.customTitles[blockType]) || defaultData.customTitles[blockType];
       var newTitle = prompt("Renommer cet encadré :", current);
       if (newTitle && newTitle.trim()) {
@@ -1567,7 +1643,7 @@
     }
 
     function fetchParisWeather() {
-      var url = "https://api.open-meteo.com/v1/forecast?latitude=48.83&longitude=2.36&daily=weathercode,temperature_2m_max,temperature_2m_min&current_weather=true&timezone=Europe%2FParis";
+      var url = "https://api.open-meteo.com/v1/forecast?latitude=48.83&longitude=2.36&daily=weathercode,temperature_2m_max,temperature_2m_min¤t_weather=true&timezone=Europe%2FParis";
       var xhr = new XMLHttpRequest();
       xhr.open("GET", url, true);
       xhr.timeout = 5000;
@@ -1614,7 +1690,7 @@
         for (var i = 0; i < uList.length; i++) {
           uHtml += '<div class="urgent-row">';
           uHtml += '<span class="urgent-text" onclick="editUrgent(' + i + ')">• ' + esc(uList[i]) + '</span>';
-          uHtml += '<button onclick="deleteUrgent(' + i + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          uHtml += '<button onclick="deleteUrgent(' + i + ')" class="del-btn" title="Supprimer">×</button>';
           uHtml += '</div>';
         }
         urgentEl.innerHTML = uHtml;
@@ -1628,7 +1704,7 @@
           var p = pList[j];
           pHtml += '<li class="item-row ' + esc(p.type) + '">';
           pHtml += '<div class="item-clickable-content" onclick="editPret(' + Number(p.id) + ')"><strong>' + esc(p.text) + '</strong> → ' + esc(p.dest) + '</div>';
-          pHtml += '<button onclick="deleteItem(\'prets\', ' + Number(p.id) + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          pHtml += '<button onclick="deleteItem(\'prets\', ' + Number(p.id) + ')" class="del-btn" title="Supprimer">×</button>';
           pHtml += '</li>';
         }
         pretsEl.innerHTML = pHtml;
@@ -1642,7 +1718,7 @@
           var r = rList[k];
           rHtml += '<li class="item-row ' + esc(r.type) + '">';
           rHtml += '<div class="item-clickable-content" onclick="editRH(' + Number(r.id) + ')"><strong>' + esc(r.text) + '</strong> : ' + esc(r.detail) + '</div>';
-          rHtml += '<button onclick="deleteItem(\'rh\', ' + Number(r.id) + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          rHtml += '<button onclick="deleteItem(\'rh\', ' + Number(r.id) + ')" class="del-btn" title="Supprimer">×</button>';
           rHtml += '</li>';
         }
         rhEl.innerHTML = rHtml;
@@ -1660,7 +1736,7 @@
           cHtml += '<div class="item-clickable-content" onclick="editCommande(' + Number(c.id) + ')">• ' + esc(c.item) + '</div>';
           cHtml += '<div style="display:flex; align-items:center; gap:8px;">';
           cHtml += '<strong style="color: var(--accent-color); font-size:0.8rem;">' + (c.prix ? esc(c.prix) + ' €' : 'En devis') + '</strong>';
-          cHtml += '<button onclick="deleteItem(\'commandes\', ' + Number(c.id) + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          cHtml += '<button onclick="deleteItem(\'commandes\', ' + Number(c.id) + ')" class="del-btn" title="Supprimer">×</button>';
           cHtml += '</div></li>';
         }
         cmdEl.innerHTML = cHtml;
@@ -1677,7 +1753,7 @@
           tHtml += '<li class="item-row task">';
           tHtml += '<input type="checkbox" ' + (tsk.done ? 'checked' : '') + ' onchange="toggleTaskDone(' + Number(tsk.id) + ')" style="cursor:pointer; width:18px; height:18px;">';
           tHtml += '<div class="item-clickable-content ' + (tsk.done ? 'memo-line done' : '') + '" onclick="editTache(' + Number(tsk.id) + ')">' + esc(tsk.text) + '</div>';
-          tHtml += '<button onclick="deleteItem(\'taches\', ' + Number(tsk.id) + ')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+          tHtml += '<button onclick="deleteItem(\'taches\', ' + Number(tsk.id) + ')" class="del-btn" title="Supprimer">×</button>';
           tHtml += '</li>';
         }
         taskEl.innerHTML = tHtml;
@@ -1715,7 +1791,7 @@
           html += '<div class="day-content ' + (eventText ? '' : 'empty') + '" onclick="editDateEvent(\'' + key + '\', \'' + dayFormatted + '\')">' + esc(eventText || '—') + '</div>';
           html += '<div class="actions-btn">';
           if (eventText) {
-            html += '<button onclick="deleteDateEvent(\'' + key + '\')" class="danger" style="padding:2px 8px; font-size:0.75rem;">✕</button>';
+            html += '<button onclick="deleteDateEvent(\'' + key + '\')" class="del-btn" title="Effacer">×</button>';
           }
           html += '</div></div>';
         }
@@ -1724,6 +1800,7 @@
     }
 
     function toggleTaskDone(taskId) {
+      if (isReadOnlyScreen) return;
       var item = appData.taches.find(function(x) { return x.id === taskId; });
       if (item) {
         item.done = !item.done;
@@ -1758,9 +1835,9 @@
           html += '<div style="font-size:0.8rem; color:#64748b; font-style:italic;">Aucune intervention enregistrée</div>';
         } else {
           for (var j = 0; j < evs.length; j++) {
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:6px; font-size:0.82rem;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:6px; font-size:0.82rem; gap:8px;">';
             html += '<span style="cursor:pointer; flex:1;" onclick="editVenueEvent(\'' + esc(v.id) + '\', ' + Number(j) + ')">• ' + esc(evs[j]) + '</span>';
-            html += '<button onclick="deleteVenueEvent(\'' + esc(v.id) + '\', ' + Number(j) + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
+            html += '<button onclick="deleteVenueEvent(\'' + esc(v.id) + '\', ' + Number(j) + ')" class="del-btn" title="Supprimer">×</button>';
             html += '</div>';
           }
         }
@@ -1791,14 +1868,14 @@
           html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
           html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" style="cursor:pointer;">';
           html += '<span class="memo-line-text" onclick="editMemoLineText(' + Number(m.id) + ', ' + Number(j) + ')">' + esc(ln.text) + '</span>';
-          html += '<button onclick="deleteMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
+          html += '<button onclick="deleteMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" class="del-btn" title="Supprimer">×</button>';
           html += '</div>';
         }
         html += '</div>';
 
         html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">';
         html += '<button onclick="addMemoLine(' + Number(m.id) + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
-        html += '<button onclick="deleteMemoCard(' + Number(m.id) + ')" class="danger" style="padding:3px 6px; font-size:0.7rem;">Supprimer bloc</button>';
+        html += '<button onclick="deleteMemoCard(' + Number(m.id) + ')" class="del-btn" style="padding:3px 8px; font-size:0.7rem;">Supprimer bloc</button>';
         html += '</div>';
 
         html += '</div>';
@@ -1828,14 +1905,14 @@
           html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
           html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleAgentMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" style="cursor:pointer;">';
           html += '<span class="memo-line-text" onclick="editAgentMemoLineText(' + Number(m.id) + ', ' + Number(j) + ')">' + esc(ln.text) + '</span>';
-          html += '<button onclick="deleteAgentMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" class="danger" style="padding:1px 6px; font-size:0.65rem;">✕</button>';
+          html += '<button onclick="deleteAgentMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" class="del-btn" title="Supprimer">×</button>';
           html += '</div>';
         }
         html += '</div>';
 
         html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">';
         html += '<button onclick="addAgentMemoLine(' + Number(m.id) + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
-        html += '<button onclick="deleteAgentMemoCard(' + Number(m.id) + ')" class="danger" style="padding:3px 6px; font-size:0.7rem;">Supprimer bloc</button>';
+        html += '<button onclick="deleteAgentMemoCard(' + Number(m.id) + ')" class="del-btn" style="padding:3px 8px; font-size:0.7rem;">Supprimer bloc</button>';
         html += '</div>';
 
         html += '</div>';
@@ -1844,6 +1921,7 @@
     }
 
     function editDateEvent(dateKey, label) {
+      if (isReadOnlyScreen) return;
       document.getElementById('entryType').value = 'calendar_day';
       document.getElementById('entryKey').value = dateKey;
       document.getElementById('modalTitle').innerText = "Journée du " + label;
@@ -1854,6 +1932,7 @@
     }
 
     function deleteDateEvent(dateKey) {
+      if (isReadOnlyScreen) return;
       if (appData.events && appData.events[dateKey]) {
         delete appData.events[dateKey];
         syncSave();
@@ -1861,6 +1940,7 @@
     }
 
     function openGenericModal(type) {
+      if (isReadOnlyScreen) return;
       document.getElementById('entryType').value = type;
       document.getElementById('entryKey').value = '-1';
       document.getElementById('modalInput1').style.display = 'block';
@@ -1887,6 +1967,7 @@
     }
 
     function openUrgentModal() {
+      if (isReadOnlyScreen) return;
       document.getElementById('entryType').value = 'urgent';
       document.getElementById('entryKey').value = '-1';
       document.getElementById('modalTitle').innerText = "Ajouter un rappel urgent";
@@ -1896,6 +1977,7 @@
     }
 
     function editUrgent(idx) {
+      if (isReadOnlyScreen) return;
       document.getElementById('entryType').value = 'urgent';
       document.getElementById('entryKey').value = idx;
       document.getElementById('modalTitle').innerText = "Modifier le rappel";
@@ -1905,6 +1987,7 @@
     }
 
     function editPret(id) {
+      if (isReadOnlyScreen) return;
       var p = appData.prets.find(function(x) { return x.id === id; });
       document.getElementById('entryType').value = 'pret';
       document.getElementById('entryKey').value = id;
@@ -1915,6 +1998,7 @@
     }
 
     function editRH(id) {
+      if (isReadOnlyScreen) return;
       var r = appData.rh.find(function(x) { return x.id === id; });
       document.getElementById('entryType').value = 'rh';
       document.getElementById('entryKey').value = id;
@@ -1925,6 +2009,7 @@
     }
 
     function editCommande(id) {
+      if (isReadOnlyScreen) return;
       var c = appData.commandes.find(function(x) { return x.id === id; });
       document.getElementById('entryType').value = 'commande';
       document.getElementById('entryKey').value = id;
@@ -1935,6 +2020,7 @@
     }
 
     function editTache(id) {
+      if (isReadOnlyScreen) return;
       var t = appData.taches.find(function(x) { return x.id === id; });
       document.getElementById('entryType').value = 'tache';
       document.getElementById('entryKey').value = id;
@@ -1945,10 +2031,12 @@
     }
 
     function deleteItem(cat, id) {
+      if (isReadOnlyScreen) return;
       appData[cat] = appData[cat].filter(function(x) { return x.id !== id; });
       syncSave();
     }
     function deleteUrgent(idx) {
+      if (isReadOnlyScreen) return;
       appData.urgents.splice(idx, 1);
       syncSave();
     }
@@ -2116,6 +2204,7 @@
     }
 
     function saveModalData() {
+      if (isReadOnlyScreen) return;
       var type = document.getElementById('entryType').value;
       var keyOrId = document.getElementById('entryKey').value;
       var subKey = document.getElementById('entrySubKey').value;
@@ -2276,7 +2365,7 @@
       var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
       var dl = document.createElement('a');
       dl.setAttribute("href", dataStr);
-      dl.setAttribute("download", "agenda_direction_sync_v13.json");
+      dl.setAttribute("download", "agenda_direction_sync.json");
       dl.click();
     }
 
@@ -2299,7 +2388,7 @@
     function forceResetCalendar() {
       if (prompt("Tape EFFACER pour réinitialiser tout l'agenda (une sauvegarde va être téléchargée)") === "EFFACER") {
         exportData();
-        try { localStorage.removeItem('mb_live_data_v13'); } catch(e) {}
+        try { localStorage.removeItem('mb_live_data_v16'); } catch(e) {}
         appData = normalize(defaultData);
         syncSave();
       }
