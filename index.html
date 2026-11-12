@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Territoire Maison Blanche 75013 - Tableau de Bord Vitrine</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
-  <!-- Firebase SDKs Compat pour navigateur direct sans compilation -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -34,7 +33,7 @@
       overflow-x: hidden;
     }
 
-    /* Écran de verrouillage général PIN (7513 ou Master 1907) */
+    /* Écran de connexion */
     #lockOverlay {
       position: fixed;
       inset: 0;
@@ -150,7 +149,7 @@
       flex-shrink: 0;
     }
 
-    /* Widget Météo Dynamique (Paris 13e) */
+    /* Widget Météo */
     .weather-widget {
       display: flex;
       align-items: center;
@@ -193,7 +192,7 @@
     }
     .date-str { font-size: 0.72rem; color: var(--text-dim); text-transform: capitalize; margin-top: 2px; }
 
-    /* Boutons et éléments généraux */
+    /* Boutons */
     button {
       background: #1e293b;
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -222,7 +221,7 @@
       gap: 12px;
     }
 
-    /* Grille 2 colonnes fidèle à V9 pour Desktop */
+    /* Grille 2 colonnes pour les 4 blocs du bas */
     .grid-2col {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -240,7 +239,7 @@
       backdrop-filter: blur(8px);
       transition: transform 0.2s, box-shadow 0.2s;
     }
-    .card.dragging {
+    .card.dragging, .grid-2col.dragging {
       opacity: 0.4;
       transform: scale(0.99);
       border-style: dashed;
@@ -252,6 +251,7 @@
       align-items: center;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       padding-bottom: 8px;
+      flex-shrink: 0;
     }
     .card-title-group {
       display: flex;
@@ -282,23 +282,29 @@
       text-decoration: underline dotted;
     }
 
-    /* Redimensionnement propre : support bureau sans casser la grille */
-    .resizable-block {
-      resize: vertical;
+    /* Tailles fixes et redimensionnement uniquement sur l'agenda */
+    .urgent-fixed-box {
+      height: 155px;
       overflow: hidden;
-      min-height: 220px;
     }
     .agenda-resizable-box {
-      min-height: 320px;
-      height: 480px;
+      resize: vertical;
+      overflow: hidden;
+      min-height: 300px;
+      height: 460px;
       max-height: 85vh;
     }
+    .fixed-bottom-card {
+      height: 250px;
+      overflow: hidden;
+      margin: 0;
+    }
 
-    /* Scrollbars internes garanties (ne masque jamais le contenu) */
+    /* Barres de défilement internes toujours actives et visibles */
     .card-scroll-body {
       flex: 1 1 auto;
       min-height: 0;
-      overflow-y: auto !important;
+      overflow-y: scroll !important;
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
@@ -306,7 +312,7 @@
       padding-right: 6px;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: thin;
-      scrollbar-color: rgba(56, 189, 248, 0.4) rgba(255, 255, 255, 0.04);
+      scrollbar-color: rgba(56, 189, 248, 0.55) rgba(255, 255, 255, 0.05);
     }
     .card-scroll-body::-webkit-scrollbar,
     .memo-lines::-webkit-scrollbar,
@@ -316,13 +322,13 @@
     .card-scroll-body::-webkit-scrollbar-track,
     .memo-lines::-webkit-scrollbar-track,
     .venue-events-scroll::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.04);
       border-radius: 8px;
     }
     .card-scroll-body::-webkit-scrollbar-thumb,
     .memo-lines::-webkit-scrollbar-thumb,
     .venue-events-scroll::-webkit-scrollbar-thumb {
-      background: rgba(56, 189, 248, 0.45);
+      background: rgba(56, 189, 248, 0.55);
       border-radius: 8px;
     }
     .card-scroll-body::-webkit-scrollbar-thumb:hover,
@@ -343,10 +349,8 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      min-height: 120px;
-      max-height: 360px;
     }
-    .urgent-header { display: flex; justify-content: space-between; align-items: center; }
+    .urgent-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
     .urgent-title {
       color: #f87171;
       font-weight: 800;
@@ -671,37 +675,7 @@
       gap: 8px;
     }
 
-    /* ================= RESPONSIVE MOBILE AMÉLIORÉ ================= */
-    @media (max-width: 768px) {
-      body { padding: 8px; gap: 10px; }
-      header {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 8px 10px;
-        gap: 8px;
-      }
-      .brand { width: 100%; }
-      .header-right {
-        justify-content: space-between;
-        width: 100%;
-        border-top: 1px solid rgba(255,255,255,0.06);
-        padding-top: 8px;
-      }
-      /* Passage sur une seule colonne uniquement sur smartphone */
-      .grid-2col, .territory-grid, .moodboard-grid, .settings-grid {
-        grid-template-columns: 1fr !important;
-      }
-      .day-row {
-        grid-template-columns: 100px 1fr auto;
-        padding: 8px 6px;
-        font-size: 0.82rem;
-      }
-      .weather-widget { padding: 4px 6px; font-size: 0.72rem; }
-      .clock { font-size: 1.15rem; }
-      .admin-bar { justify-content: center; }
-    }
-  
-    /* Mode Affichage Écran Vitrine (Lecture seule automatique) */
+    /* Mode Affichage Écran Vitrine (Lecture seule) */
     body.readonly-mode button:not(.tab-btn),
     body.readonly-mode .drag-handle,
     body.readonly-mode .admin-bar,
@@ -719,11 +693,39 @@
       pointer-events: none !important;
     }
 
+    /* Responsive Mobile */
+    @media (max-width: 768px) {
+      body { padding: 8px; gap: 10px; }
+      header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 8px 10px;
+        gap: 8px;
+      }
+      .brand { width: 100%; }
+      .header-right {
+        justify-content: space-between;
+        width: 100%;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        padding-top: 8px;
+      }
+      .grid-2col, .territory-grid, .moodboard-grid, .settings-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .day-row {
+        grid-template-columns: 100px 1fr auto;
+        padding: 8px 6px;
+        font-size: 0.82rem;
+      }
+      .weather-widget { padding: 4px 6px; font-size: 0.72rem; }
+      .clock { font-size: 1.15rem; }
+      .admin-bar { justify-content: center; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- ÉCRAN DE CONNEXION SÉCURISÉ PAR PIN (VÉRIFIÉ SERVEUR FIREBASE) -->
+  <!-- ÉCRAN DE CONNEXION SÉCURISÉ PAR PIN -->
   <div id="lockOverlay">
     <div class="lock-box">
       <div class="lock-icon">🔒</div>
@@ -732,7 +734,7 @@
         <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Territoire Maison Blanche 75013</div>
       </div>
       <select id="userProfileSelect" style="padding: 10px; font-size: 0.88rem; background: #1e293b; color: white; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);">
-        <option value="direction">🏛️ Direction & Équipe (Édition)</option>
+        <option value="direction">🏛️ Direction</option>
         <option value="ecran">📺 Écran Vitrine QM43R (Lecture seule)</option>
         <option value="lora">👤 Lora</option>
         <option value="stephane">👤 Stéphane</option>
@@ -750,19 +752,17 @@
   <header>
     <div class="brand">
       <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('agenda')">📅 Agenda</button>
-        <button class="tab-btn" onclick="switchTab('territoire')">📍 Territoire</button>
-        <button class="tab-btn" onclick="switchTab('moodboard')">📋 Mémo et Suivi</button>
-        <!-- Onglets agents individuels préservés -->
-        <button class="tab-btn agent" onclick="tryOpenAgentTab('lora')">👤 Lora</button>
-        <button class="tab-btn agent" onclick="tryOpenAgentTab('stephane')">👤 Stéphane</button>
-        <button class="tab-btn agent" onclick="tryOpenAgentTab('malik')">👤 Malik</button>
-        <button class="tab-btn agent" onclick="tryOpenAgentTab('anas')">👤 Anas</button>
-        <button class="tab-btn" onclick="switchTab('parametres')">⚙️ Paramètres</button>
+        <button class="tab-btn active" onclick="switchTab('agenda', this)">📅 Agenda</button>
+        <button class="tab-btn" onclick="switchTab('territoire', this)">📍 Territoire</button>
+        <button class="tab-btn" onclick="switchTab('moodboard', this)">📋 Mémo et Suivi</button>
+        <button class="tab-btn agent" id="tabBtn-lora" onclick="tryOpenAgentTab('lora', this)">👤 Lora</button>
+        <button class="tab-btn agent" id="tabBtn-stephane" onclick="tryOpenAgentTab('stephane', this)">👤 Stéphane</button>
+        <button class="tab-btn agent" id="tabBtn-malik" onclick="tryOpenAgentTab('malik', this)">👤 Malik</button>
+        <button class="tab-btn agent" id="tabBtn-anas" onclick="tryOpenAgentTab('anas', this)">👤 Anas</button>
+        <button class="tab-btn" onclick="switchTab('parametres', this)">⚙️ Paramètres</button>
       </div>
     </div>
     <div class="header-right">
-      <!-- Widget Météo Dynamique (Aujourd'hui & Demain) -->
       <div class="weather-widget" id="weatherWidget" title="Météo en direct Paris 13e">
         <div class="weather-day" id="weatherToday">⏳ Météo...</div>
         <div class="weather-separator"></div>
@@ -774,7 +774,7 @@
         <div class="clock" id="liveClock">--:--:--</div>
         <div class="date-str" id="liveDate">Chargement...</div>
       </div>
-      <button onclick="relockScreen()" style="padding: 5px 8px; font-size: 0.75rem;">🔒</button>
+      <button onclick="relockScreen()" style="padding: 5px 8px; font-size: 0.75rem;" title="Se déconnecter">🔒</button>
     </div>
   </header>
 
@@ -782,8 +782,8 @@
   <div id="tab-agenda" class="tab-content active">
     <div class="dashboard-container" id="dashboardContainer">
       
-      <!-- BLOC 1 : Rappels Urgents -->
-      <div class="card urgent-banner resizable-block" id="block-urgents" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+      <!-- 1. EN HAUT : Barre Rouge Rappels Urgents (Taille fixe) -->
+      <div class="card urgent-banner urgent-fixed-box" id="block-urgents" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
         <div class="urgent-header">
           <div class="card-title-group">
             <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
@@ -791,14 +791,26 @@
           </div>
           <button onclick="openUrgentModal()" style="padding: 3px 8px; font-size: 0.72rem;">+ Ajouter un rappel</button>
         </div>
-        <div class="card-scroll-body" style="padding-top: 4px;">
+        <div class="card-scroll-body">
           <div class="urgent-items" id="urgentList"></div>
         </div>
       </div>
 
-      <!-- BLOC 2 : Prêts & RH (2 Colonnes côte à côte préservées sur PC) -->
-      <div class="grid-2col resizable-block" id="block-prets-rh" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-        <div class="card" style="margin:0; height:100%;">
+      <!-- 2. AU MILIEU : Agenda Prévisionnel 35 Jours (Seul bloc redimensionnable) -->
+      <div class="card agenda-resizable-box" id="block-agenda" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
+            <div class="card-title" id="title-agenda" onclick="renameCustomBlock('agenda')">📅 Agenda Prévisionnel (35 jours glissants)</div>
+          </div>
+          <div style="font-size: 0.75rem; color: #94a3b8;">Cliquer directement sur un jour pour modifier</div>
+        </div>
+        <div class="card-scroll-body" id="agendaScroll"></div>
+      </div>
+
+      <!-- 3. EN BAS (Ligne 1) : Prêts de matériel & RH Alertes (Taille fixe + Scroll) -->
+      <div class="grid-2col" id="block-prets-rh" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+        <div class="card fixed-bottom-card">
           <div class="card-header">
             <div class="card-title-group">
               <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
@@ -811,7 +823,7 @@
           </div>
         </div>
 
-        <div class="card" style="margin:0; height:100%;">
+        <div class="card fixed-bottom-card">
           <div class="card-header">
             <div class="card-title-group">
               <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
@@ -825,22 +837,9 @@
         </div>
       </div>
 
-      <!-- BLOC 3 : Agenda Prévisionnel 35 Jours -->
-      <div class="card agenda-resizable-box resizable-block" id="block-agenda" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-        <div class="card-header">
-          <div class="card-title-group">
-            <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
-            <div class="card-title" id="title-agenda" onclick="renameCustomBlock('agenda')">📅 Agenda Prévisionnel (35 jours glissants)</div>
-          </div>
-          <div style="font-size: 0.75rem; color: #94a3b8;">Cliquer directement sur un jour pour modifier</div>
-        </div>
-        <div class="card-scroll-body" id="agendaScroll"></div>
-      </div>
-
-      <!-- BLOC 4 : Partie Basse (2 Colonnes côte à côte : Commandes/Devis + Tâches/Missions) -->
-      <div class="grid-2col resizable-block" id="block-bottom-grid" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-        <!-- Colonne 1 : Commandes & Devis -->
-        <div class="card" style="margin:0; height:100%;">
+      <!-- 4. EN BAS (Ligne 2) : Commandes & Devis + Tâches & Missions (Taille fixe + Scroll) -->
+      <div class="grid-2col" id="block-bottom-grid" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+        <div class="card fixed-bottom-card">
           <div class="card-header">
             <div class="card-title-group">
               <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
@@ -856,8 +855,7 @@
           </div>
         </div>
 
-        <!-- Colonne 2 : Tâches & Missions -->
-        <div class="card" style="margin:0; height:100%;">
+        <div class="card fixed-bottom-card">
           <div class="card-header">
             <div class="card-title-group">
               <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
@@ -895,12 +893,11 @@
     <div class="moodboard-grid" id="moodboardContainer"></div>
   </div>
 
-  <!-- ================= ONGLETS AGENTS : LORA, STÉPHANE, MALIK, ANAS ================= -->
+  <!-- ================= ONGLET ESPACE PERSONNEL AGENT ================= -->
   <div id="tab-agent" class="tab-content">
     <div class="agent-header-box">
       <div class="agent-name-title" id="currentAgentTitle">👤 Espace Agent</div>
       <div class="agent-actions">
-        
         <button onclick="addNewAgentMemoCard()" class="primary" style="font-size:0.75rem;">+ Ajouter un bloc</button>
       </div>
     </div>
@@ -998,36 +995,7 @@
     </div>
   </div>
 
-  <!-- Modal Mot de Passe Espace Agent -->
-  <div class="modal" id="agentAuthModal">
-    <div class="modal-card" style="max-width: 360px;">
-      <h3 id="agentAuthTitle">🔐 Espace Agent</h3>
-      <p style="font-size: 0.8rem; color: #94a3b8;">Entrez votre code personnel à 4 chiffres (ou Master) :</p>
-      <input type="password" id="agentPinInput" class="pin-input" placeholder="••••" maxlength="4" onkeypress="if(event.key === 'Enter') validateAgentPin()">
-      <div id="agentAuthError" style="font-size:0.75rem; color:#f87171; display:none;">Code PIN incorrect</div>
-      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
-        <button onclick="closeAgentAuthModal()">Annuler</button>
-        <button onclick="validateAgentPin()" class="primary">Accéder</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Changement de Code PIN Agent (4 chiffres) -->
-  <div class="modal" id="changePinModal">
-    <div class="modal-card" style="max-width: 360px;">
-      <h3 id="changePinTitle">🔑 Changer mon code PIN</h3>
-      <p style="font-size: 0.8rem; color: #94a3b8;">Saisissez votre nouveau code à 4 chiffres :</p>
-      <input type="password" id="newPinInput1" class="pin-input" placeholder="••••" maxlength="4">
-      <input type="password" id="newPinInput2" class="pin-input" placeholder="Confirmer ••••" maxlength="4" style="margin-top:6px;">
-      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
-        <button onclick="closeChangePinModal()">Annuler</button>
-        <button onclick="saveNewAgentPin()" class="primary">Enregistrer</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // Configuration Firebase officielle
     var firebaseConfig = {
       apiKey: "AIzaSyC916b_mPJ76e2UaS4EMNLudoDGmi6Btnw",
       authDomain: "agenda-maison-blanche.firebaseapp.com",
@@ -1048,14 +1016,12 @@
       console.warn("Connexion Firebase locale/hors ligne", e);
     }
 
-    // Échappement XSS pour sécuriser tous les affichages
     function esc(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        return { '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[c];
       });
     }
 
-    // Authentification Sécurisée Firebase avec PIN 4 chiffres
     var auth = null;
     try {
       auth = firebase.auth();
@@ -1064,17 +1030,46 @@
       console.warn("Firebase Auth non initialisé", e);
     }
 
-    // Mapping sécurisé Profil -> Email interne Firebase
     function getProfileEmail(prof) {
       return prof + "@maisonblanche75013.internal";
     }
-    // Générateur de mot de passe sécurisé à partir du PIN (Firebase exige >= 6 caractères)
     function pinToPass(prof, pin) {
       return "mb_" + prof + "_" + pin + "_sec";
     }
 
-    var currentUserProfile = null;
+    var loggedProfile = null;
     var isReadOnlyScreen = false;
+    var syncInitialized = false;
+
+    // Cloisonnement strict des onglets collaborateurs selon le profil connecté
+    function applyAccessPermissions(profile) {
+      loggedProfile = profile;
+      var agentKeys = ['lora', 'stephane', 'malik', 'anas'];
+      
+      for (var i = 0; i < agentKeys.length; i++) {
+        var k = agentKeys[i];
+        var btn = document.getElementById('tabBtn-' + k);
+        if (!btn) continue;
+
+        if (profile === 'master') {
+          // Seul le Master Administrateur voit tous les onglets collaborateurs
+          btn.style.display = 'inline-flex';
+        } else if (profile === k) {
+          // Un collaborateur voit uniquement son propre onglet
+          btn.style.display = 'inline-flex';
+        } else {
+          // Direction, Écran et les autres collègues ne voient pas les onglets privés d'autrui
+          btn.style.display = 'none';
+        }
+      }
+
+      // Si on était sur un onglet agent non autorisé, retour à l'agenda
+      if (activeAgentKey && profile !== 'master' && profile !== activeAgentKey) {
+        activeAgentKey = null;
+        var agendaBtn = document.querySelector('.tab-btn[onclick*="agenda"]');
+        switchTab('agenda', agendaBtn);
+      }
+    }
 
     function checkGateAuth() {
       var prof = document.getElementById('userProfileSelect').value;
@@ -1091,18 +1086,18 @@
       var password = pinToPass(prof, pin);
 
       if (!auth) {
-        // Mode secours local si hors ligne
-        document.getElementById('lockOverlay').style.display = 'none';
+        err.innerText = "Connexion réseau requise pour vérifier le code.";
+        err.style.display = 'block';
         return;
       }
 
       auth.signInWithEmailAndPassword(email, password)
-        .then(function(userCred) {
+        .then(function() {
           err.style.display = 'none';
           document.getElementById('gatePassInput').value = '';
           document.getElementById('lockOverlay').style.display = 'none';
         })
-        .catch(function(error) {
+        .catch(function() {
           err.innerText = "Code PIN incorrect pour ce profil.";
           err.style.display = 'block';
           document.getElementById('gatePassInput').value = '';
@@ -1113,36 +1108,36 @@
     function relockScreen() {
       if (auth) auth.signOut();
       syncInitialized = false;
+      loggedProfile = null;
+      activeAgentKey = null;
       document.getElementById('gatePassInput').value = '';
       document.getElementById('gateErrorMsg').style.display = 'none';
       document.getElementById('lockOverlay').style.display = 'flex';
       document.getElementById('gatePassInput').focus();
     }
 
-    // Écouteur d'état d'authentification persistant
     if (auth) {
       auth.onAuthStateChanged(function(user) {
         if (user) {
           document.getElementById('lockOverlay').style.display = 'none';
-          var email = user.email || '';
-          isReadOnlyScreen = (email.indexOf('ecran@') === 0);
+          var email = (user.email || '').toLowerCase();
+          var prof = email.split('@')[0];
+          isReadOnlyScreen = (prof === 'ecran');
           document.body.classList.toggle('readonly-mode', isReadOnlyScreen);
-
-          // Initialisation de la synchronisation Firebase une fois authentifié
+          applyAccessPermissions(prof);
           initFirebaseSync();
         } else {
           syncInitialized = false;
+          loggedProfile = null;
           document.getElementById('lockOverlay').style.display = 'flex';
           if (cloudRef) cloudRef.off();
         }
       });
     } else {
-      // Si la connexion réseau échoue avant le chargement du SDK Auth, garder l'overlay visible avec message d'erreur clair
       document.getElementById('gateErrorMsg').innerText = "Connexion réseau requise pour authentifier le code PIN.";
       document.getElementById('gateErrorMsg').style.display = 'block';
     }
 
-    // Données par défaut fiabilisées
     var defaultAgents = {
       lora: {
         name: "Lora",
@@ -1371,7 +1366,7 @@
         commandes: "📦 Commandes & Devis",
         taches: "✅ Tâches & Missions"
       },
-      blockOrder: ["block-urgents", "block-prets-rh", "block-agenda", "block-bottom-grid"],
+      blockOrder: ["block-urgents", "block-agenda", "block-prets-rh", "block-bottom-grid"],
       theme: {
         bg: "#070a11",
         text: "#f8fafc",
@@ -1382,7 +1377,6 @@
       }
     };
 
-    // Normalisation prévenant la disparition des tableaux vides sur Firebase
     function toArr(x) {
       if (!x) return [];
       if (Array.isArray(x)) return x.filter(function(i){ return i != null; });
@@ -1406,7 +1400,6 @@
       if (!o.venues.length) o.venues = defaultVenues;
       if (!o.blockOrder.length) o.blockOrder = defaultData.blockOrder;
 
-      // Agents memos normalization
       for (var agKey in o.agents) {
         if (o.agents.hasOwnProperty(agKey)) {
           o.agents[agKey].memos = toArr(o.agents[agKey].memos).map(function(m){
@@ -1432,12 +1425,10 @@
     var appData = normalize(defaultData);
 
     try {
-      var stored = localStorage.getItem('mb_live_data_v12');
+      var stored = localStorage.getItem('mb_live_data_v13');
       if (stored) appData = normalize(JSON.parse(stored));
     } catch(e) {}
 
-    // Initialisation écoute temps réel sécurisée
-    var syncInitialized = false;
     function initFirebaseSync() {
       if (!cloudRef || syncInitialized) return;
       syncInitialized = true;
@@ -1445,7 +1436,7 @@
         var val = snapshot.val();
         if (val) {
           appData = normalize(val);
-          try { localStorage.setItem('mb_live_data_v12', JSON.stringify(appData)); } catch(e){}
+          try { localStorage.setItem('mb_live_data_v13', JSON.stringify(appData)); } catch(e){}
           applyTheme();
           renderAll();
           document.getElementById('syncBadge').innerText = "● Direct";
@@ -1461,8 +1452,8 @@
     }
 
     function syncSave() {
-      try { localStorage.setItem('mb_live_data_v12', JSON.stringify(appData)); } catch(e) {}
-      if (cloudRef) cloudRef.set(appData);
+      try { localStorage.setItem('mb_live_data_v13', JSON.stringify(appData)); } catch(e) {}
+      if (cloudRef && !isReadOnlyScreen) cloudRef.set(appData);
       applyTheme();
       renderAll();
     }
@@ -1473,14 +1464,12 @@
     }
     var dayLabels = ["Di", "L", "Ma", "Me", "J", "V", "S"];
 
-    // Navigation des onglets
     var activeAgentKey = null;
 
-    function switchTab(tabName) {
+    function switchTab(tabName, btnEl) {
       var tabs = ['agenda', 'territoire', 'moodboard', 'agent', 'parametres'];
       for (var i = 0; i < tabs.length; i++) {
-        var t = tabs[i];
-        var content = document.getElementById('tab-' + t);
+        var content = document.getElementById('tab-' + tabs[i]);
         if (content) content.classList.remove('active');
       }
       var targetContent = document.getElementById('tab-' + tabName);
@@ -1488,21 +1477,23 @@
 
       var btns = document.querySelectorAll('.tab-btn');
       btns.forEach(function(b) { b.classList.remove('active'); });
-      if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
-      }
+      if (btnEl) btnEl.classList.add('active');
     }
 
-    // Ouverture directe des espaces agents (la sécurité est déjà garantie par l'authentification Firebase)
-    function tryOpenAgentTab(agentKey) {
+    function tryOpenAgentTab(agentKey, btnEl) {
+      // Vérification de sécurité stricte côté interface
+      if (loggedProfile !== 'master' && loggedProfile !== agentKey) {
+        alert("Accès refusé : cet espace personnel est réservé au collaborateur concerné.");
+        return;
+      }
       activeAgentKey = agentKey;
       var ag = (appData.agents && appData.agents[agentKey]) || defaultAgents[agentKey];
       document.getElementById('currentAgentTitle').innerHTML = "👤 Espace Personnel : <strong>" + esc(ag.name) + "</strong>";
       renderAgentMemos();
-      switchTab('agent');
+      switchTab('agent', btnEl);
     }
 
-    // ================= DRAG & DROP RÉORGANISATION DES BLOCS =================
+    // Drag & Drop réorganisation des blocs
     var draggedElement = null;
 
     function handleDragStart(e) {
@@ -1543,7 +1534,7 @@
       }
     }
 
-    function handleDragEnd(e) {
+    function handleDragEnd() {
       if (draggedElement) {
         draggedElement.classList.remove('dragging');
         draggedElement = null;
@@ -1560,12 +1551,11 @@
     }
 
     function resetBlockOrder() {
-      appData.blockOrder = defaultData.blockOrder;
+      appData.blockOrder = ["block-urgents", "block-agenda", "block-prets-rh", "block-bottom-grid"];
       syncSave();
       applyBlockOrder();
     }
 
-    // Renommage sauvegardé dans Firebase
     function renameCustomBlock(blockType) {
       var current = (appData.customTitles && appData.customTitles[blockType]) || defaultData.customTitles[blockType];
       var newTitle = prompt("Renommer cet encadré :", current);
@@ -1586,7 +1576,7 @@
       }
     }
 
-    // ================= MÉTÉO DYNAMIQUE (PARIS 13e) =================
+    // Météo Paris 13e
     function weatherCodeToIcon(code) {
       if (code === 0) return { icon: "☀️", label: "Ensoleillé" };
       if (code >= 1 && code <= 3) return { icon: "⛅", label: "Éclaircies" };
@@ -1598,7 +1588,7 @@
     }
 
     function fetchParisWeather() {
-      var url = "https://api.open-meteo.com/v1/forecast?latitude=48.83&longitude=2.36&daily=weathercode,temperature_2m_max,temperature_2m_min&current_weather=true&timezone=Europe%2FParis";
+      var url = "https://api.open-meteo.com/v1/forecast?latitude=48.83&longitude=2.36&daily=weathercode,temperature_2m_max,temperature_2m_min¤t_weather=true&timezone=Europe%2FParis";
       var xhr = new XMLHttpRequest();
       xhr.open("GET", url, true);
       xhr.timeout = 5000;
@@ -1628,7 +1618,7 @@
       xhr.send();
     }
 
-    // ================= RENDUS GLOBAUX =================
+    // Rendus Globaux
     function renderAll() {
       applyBlockOrder();
       applyCustomTitles();
@@ -1720,7 +1710,7 @@
         taskEl.innerHTML = tHtml;
       }
 
-      // 6. Calendrier 35 Jours avec calcul exact sans bug d'heure d'été/hiver
+      // 6. Calendrier 35 Jours
       var agendaEl = document.getElementById('agendaScroll');
       if (agendaEl) {
         var now = new Date();
@@ -1787,7 +1777,7 @@
         html += '<div class="venue-events-box">';
         html += '<div class="venue-events-title">';
         html += '<span>Événements & Consignes du site</span>';
-        html += '<button onclick="addVenueEvent(\'' + v.id + '\')" style="padding:2px 8px; font-size:0.7rem;">+ Événement</button>';
+        html += '<button onclick="addVenueEvent(\'' + esc(v.id) + '\')" style="padding:2px 8px; font-size:0.7rem;">+ Événement</button>';
         html += '</div>';
 
         html += '<div class="venue-events-scroll">';
@@ -1802,7 +1792,7 @@
             html += '</div>';
           }
         }
-        html += '</div>'; // fin scroll
+        html += '</div>';
         html += '</div></div>';
       }
       cont.innerHTML = html;
@@ -1881,7 +1871,7 @@
       cont.innerHTML = html;
     }
 
-    // ================= ÉDITION GÉNÉRALE =================
+    // Édition Générale
     function editDateEvent(dateKey, label) {
       document.getElementById('entryType').value = 'calendar_day';
       document.getElementById('entryKey').value = dateKey;
@@ -2315,7 +2305,7 @@
       var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
       var dl = document.createElement('a');
       dl.setAttribute("href", dataStr);
-      dl.setAttribute("download", "agenda_direction_sync_v11.json");
+      dl.setAttribute("download", "agenda_direction_sync_v13.json");
       dl.click();
     }
 
@@ -2338,13 +2328,12 @@
     function forceResetCalendar() {
       if (prompt("Tape EFFACER pour réinitialiser tout l'agenda (une sauvegarde va être téléchargée)") === "EFFACER") {
         exportData();
-        try { localStorage.removeItem('mb_live_data_v12'); } catch(e) {}
+        try { localStorage.removeItem('mb_live_data_v13'); } catch(e) {}
         appData = normalize(defaultData);
         syncSave();
       }
     }
 
-    // Rafraîchissement automatique de l'agenda à minuit sans rechargement
     var lastDayKey = formatDateKey(new Date());
     setInterval(function(){
       var k = formatDateKey(new Date());
@@ -2354,7 +2343,6 @@
       }
     }, 60000);
 
-    // Initialisation Météo & Rendu
     fetchParisWeather();
     setInterval(fetchParisWeather, 30 * 60 * 1000);
     applyTheme();
