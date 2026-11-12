@@ -33,7 +33,6 @@
       overflow-x: hidden;
     }
 
-    /* Écran de connexion */
     #lockOverlay {
       position: fixed;
       inset: 0;
@@ -86,7 +85,6 @@
       box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
     }
 
-    /* En-tête Navigation */
     header {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -149,7 +147,6 @@
       flex-shrink: 0;
     }
 
-    /* Widget Météo */
     .weather-widget {
       display: flex;
       align-items: center;
@@ -192,7 +189,6 @@
     }
     .date-str { font-size: 0.72rem; color: var(--text-dim); text-transform: capitalize; margin-top: 2px; }
 
-    /* Boutons */
     button {
       background: #1e293b;
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -214,14 +210,12 @@
     button.danger { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
     button.danger:hover { background: #dc2626; color: white; }
 
-    /* Structure Dashboard & Grilles */
     .dashboard-container {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
 
-    /* Grille 2 colonnes pour les 4 blocs du bas */
     .grid-2col {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -282,7 +276,6 @@
       text-decoration: underline dotted;
     }
 
-    /* Tailles fixes et redimensionnement uniquement sur l'agenda */
     .urgent-fixed-box {
       height: 155px;
       overflow: hidden;
@@ -300,7 +293,6 @@
       margin: 0;
     }
 
-    /* Barres de défilement internes toujours actives et visibles */
     .card-scroll-body {
       flex: 1 1 auto;
       min-height: 0;
@@ -340,7 +332,6 @@
     .tab-content { display: none; flex-direction: column; gap: 12px; }
     .tab-content.active { display: flex; }
 
-    /* Rappels Urgents */
     .urgent-banner {
       background: linear-gradient(90deg, rgba(239, 68, 68, 0.18), rgba(245, 158, 11, 0.12));
       border: 1px solid rgba(239, 68, 68, 0.4);
@@ -373,7 +364,6 @@
     .urgent-text { flex: 1; cursor: pointer; }
     .urgent-text:hover { text-decoration: underline dotted; }
 
-    /* Listes d'items */
     .item-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
     .item-row {
       display: flex;
@@ -405,7 +395,6 @@
       color: #38bdf8;
     }
 
-    /* Lignes Agenda */
     .day-row {
       display: grid;
       grid-template-columns: 125px 1fr auto;
@@ -439,7 +428,6 @@
     .day-content.empty { color: #475569; font-style: italic; }
     .actions-btn { display: flex; align-items: center; gap: 6px; }
 
-    /* Territoire */
     .territory-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -513,7 +501,6 @@
       align-items: center;
     }
 
-    /* Mémo et Suivi */
     .moodboard-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -573,7 +560,6 @@
     .memo-line-text { flex: 1; cursor: pointer; }
     .memo-line-text:hover { text-decoration: underline dotted; }
 
-    /* Espaces Personnels Agents */
     .agent-header-box {
       background: var(--card-bg);
       padding: 14px 18px;
@@ -593,7 +579,6 @@
     }
     .agent-actions { display: flex; gap: 8px; align-items: center; }
 
-    /* Paramètres */
     .settings-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -628,7 +613,6 @@
       background: none;
     }
 
-    /* Modale */
     .modal {
       display: none;
       position: fixed;
@@ -661,7 +645,6 @@
       font-size: 0.9rem;
     }
 
-    /* Barre basse */
     .admin-bar {
       display: flex;
       justify-content: space-between;
@@ -675,7 +658,6 @@
       gap: 8px;
     }
 
-    /* Mode Affichage Écran Vitrine (Lecture seule) */
     body.readonly-mode button:not(.tab-btn),
     body.readonly-mode .drag-handle,
     body.readonly-mode .admin-bar,
@@ -693,7 +675,6 @@
       pointer-events: none !important;
     }
 
-    /* Responsive Mobile */
     @media (max-width: 768px) {
       body { padding: 8px; gap: 10px; }
       header {
@@ -744,7 +725,7 @@
       </select>
       <input type="password" id="gatePassInput" class="pin-input" placeholder="Code PIN ••••" maxlength="4" onkeypress="if(event.key === 'Enter') checkGateAuth()">
       <button onclick="checkGateAuth()" class="primary" style="width: 100%; padding: 12px; font-size: 0.9rem;">Déverrouiller</button>
-      <div id="gateErrorMsg" style="font-size: 0.78rem; color: #f87171; display: none;">Code PIN incorrect pour ce profil</div>
+      <div id="gateErrorMsg" style="font-size: 0.78rem; color: #f87171; display: none; line-height: 1.35;">Code PIN incorrect</div>
     </div>
   </div>
 
@@ -1018,7 +999,7 @@
 
     function esc(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
-        return { '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[c];
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
     }
 
@@ -1041,7 +1022,6 @@
     var isReadOnlyScreen = false;
     var syncInitialized = false;
 
-    // Cloisonnement strict des onglets collaborateurs selon le profil connecté
     function applyAccessPermissions(profile) {
       loggedProfile = profile;
       var agentKeys = ['lora', 'stephane', 'malik', 'anas'];
@@ -1052,18 +1032,14 @@
         if (!btn) continue;
 
         if (profile === 'master') {
-          // Seul le Master Administrateur voit tous les onglets collaborateurs
           btn.style.display = 'inline-flex';
         } else if (profile === k) {
-          // Un collaborateur voit uniquement son propre onglet
           btn.style.display = 'inline-flex';
         } else {
-          // Direction, Écran et les autres collègues ne voient pas les onglets privés d'autrui
           btn.style.display = 'none';
         }
       }
 
-      // Si on était sur un onglet agent non autorisé, retour à l'agenda
       if (activeAgentKey && profile !== 'master' && profile !== activeAgentKey) {
         activeAgentKey = null;
         var agendaBtn = document.querySelector('.tab-btn[onclick*="agenda"]');
@@ -1097,8 +1073,14 @@
           document.getElementById('gatePassInput').value = '';
           document.getElementById('lockOverlay').style.display = 'none';
         })
-        .catch(function() {
-          err.innerText = "Code PIN incorrect pour ce profil.";
+        .catch(function(error) {
+          if (error.code === 'auth/user-not-found') {
+            err.innerText = "Compte non créé dans Firebase (" + email + ").";
+          } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-login-credentials') {
+            err.innerText = "Code PIN incorrect pour ce profil.";
+          } else {
+            err.innerText = "Erreur de connexion : " + error.message;
+          }
           err.style.display = 'block';
           document.getElementById('gatePassInput').value = '';
           document.getElementById('gatePassInput').focus();
@@ -1481,7 +1463,6 @@
     }
 
     function tryOpenAgentTab(agentKey, btnEl) {
-      // Vérification de sécurité stricte côté interface
       if (loggedProfile !== 'master' && loggedProfile !== agentKey) {
         alert("Accès refusé : cet espace personnel est réservé au collaborateur concerné.");
         return;
@@ -1493,7 +1474,6 @@
       switchTab('agent', btnEl);
     }
 
-    // Drag & Drop réorganisation des blocs
     var draggedElement = null;
 
     function handleDragStart(e) {
@@ -1576,7 +1556,6 @@
       }
     }
 
-    // Météo Paris 13e
     function weatherCodeToIcon(code) {
       if (code === 0) return { icon: "☀️", label: "Ensoleillé" };
       if (code >= 1 && code <= 3) return { icon: "⛅", label: "Éclaircies" };
@@ -1588,7 +1567,7 @@
     }
 
     function fetchParisWeather() {
-      var url = "https://api.open-meteo.com/v1/forecast?latitude=48.83&longitude=2.36&daily=weathercode,temperature_2m_max,temperature_2m_min¤t_weather=true&timezone=Europe%2FParis";
+      var url = "https://api.open-meteo.com/v1/forecast?latitude=48.83&longitude=2.36&daily=weathercode,temperature_2m_max,temperature_2m_min&current_weather=true&timezone=Europe%2FParis";
       var xhr = new XMLHttpRequest();
       xhr.open("GET", url, true);
       xhr.timeout = 5000;
@@ -1618,7 +1597,6 @@
       xhr.send();
     }
 
-    // Rendus Globaux
     function renderAll() {
       applyBlockOrder();
       applyCustomTitles();
@@ -1629,7 +1607,6 @@
     }
 
     function renderAgenda() {
-      // 1. Rappels Urgents
       var urgentEl = document.getElementById('urgentList');
       if (urgentEl) {
         var uHtml = '';
@@ -1643,7 +1620,6 @@
         urgentEl.innerHTML = uHtml;
       }
 
-      // 2. Prêts
       var pretsEl = document.getElementById('pretsList');
       if (pretsEl) {
         var pHtml = '';
@@ -1658,7 +1634,6 @@
         pretsEl.innerHTML = pHtml;
       }
 
-      // 3. RH
       var rhEl = document.getElementById('rhList');
       if (rhEl) {
         var rHtml = '';
@@ -1673,7 +1648,6 @@
         rhEl.innerHTML = rHtml;
       }
 
-      // 4. Commandes & Devis
       var cmdEl = document.getElementById('commandesList');
       var total = 0;
       if (cmdEl) {
@@ -1694,7 +1668,6 @@
       var totalEl = document.getElementById('totalCommandes');
       if (totalEl) totalEl.innerText = 'Total : ' + total.toLocaleString('fr-FR') + ' €';
 
-      // 5. Tâches & Missions
       var taskEl = document.getElementById('tachesList');
       if (taskEl) {
         var tHtml = '';
@@ -1710,7 +1683,6 @@
         taskEl.innerHTML = tHtml;
       }
 
-      // 6. Calendrier 35 Jours
       var agendaEl = document.getElementById('agendaScroll');
       if (agendaEl) {
         var now = new Date();
@@ -1871,7 +1843,6 @@
       cont.innerHTML = html;
     }
 
-    // Édition Générale
     function editDateEvent(dateKey, label) {
       document.getElementById('entryType').value = 'calendar_day';
       document.getElementById('entryKey').value = dateKey;
