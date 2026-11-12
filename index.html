@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Territoire Maison Blanche 75013 - Tableau de Bord</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <!-- SDK Firebase 8.10.1 : compatibilité maximale PC, Mobile et Écran Samsung Tizen -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <style>
     :root {
       --bg-color: #070a11;
@@ -208,7 +209,6 @@
     button.primary { background: #0284c7; border-color: var(--accent-color); }
     button.primary:hover { background: #0369a1; }
 
-    /* Bouton de suppression petit et discret assorti au fond bleu nuit */
     button.del-btn {
       background: rgba(15, 23, 42, 0.65);
       border: 1px solid rgba(56, 189, 248, 0.14);
@@ -293,7 +293,6 @@
       text-decoration: underline dotted;
     }
 
-    /* Bloc alerte agrandi d'une ligne d'événements */
     .urgent-fixed-box {
       height: 198px;
       overflow: hidden;
@@ -677,10 +676,7 @@
       gap: 8px;
     }
 
-    /* Mode Affichage Écran Vitrine :
-       - Garde uniquement l'onglet Agenda
-       - Conserve le déplacement et le redimensionnement de l'agenda
-       - Bloque uniquement l'ajout, l'édition et la suppression d'événements/données */
+    /* Mode Affichage Écran Vitrine */
     body.readonly-mode header,
     body.readonly-mode .card {
       backdrop-filter: none !important;
@@ -755,8 +751,8 @@
         <option value="anas">👤 Anas</option>
         <option value="master">🔑 Master Administrateur</option>
       </select>
-      <input type="password" id="gatePassInput" class="pin-input" placeholder="Code PIN ••••" maxlength="4" onkeypress="if(event.key === 'Enter') checkGateAuth()">
-      <button onclick="checkGateAuth()" class="primary" style="width: 100%; padding: 12px; font-size: 0.9rem;">Déverrouiller</button>
+      <input type="password" inputmode="numeric" id="gatePassInput" class="pin-input" placeholder="Code PIN ••••" maxlength="4" onkeypress="if(event.key === 'Enter') checkGateAuth()">
+      <button id="unlockSubmitBtn" onclick="checkGateAuth()" class="primary" style="width: 100%; padding: 12px; font-size: 0.9rem;">Déverrouiller</button>
       <div id="gateErrorMsg" style="font-size: 0.78rem; color: #f87171; display: none; line-height: 1.35;">Code PIN incorrect</div>
     </div>
   </div>
@@ -795,7 +791,7 @@
   <div id="tab-agenda" class="tab-content active">
     <div class="dashboard-container" id="dashboardContainer">
       
-      <!-- 1. EN HAUT : Barre Rouge Rappels Urgents (agrandie d'une ligne) -->
+      <!-- 1. EN HAUT : Barre Rouge Rappels Urgents -->
       <div class="card urgent-banner urgent-fixed-box" id="block-urgents" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
         <div class="urgent-header">
           <div class="card-title-group">
@@ -1021,26 +1017,26 @@
 
     var db = null;
     var cloudRef = null;
+    var auth = null;
+
     try {
-      firebase.initializeApp(firebaseConfig);
-      db = firebase.database();
-      cloudRef = db.ref('territoire_maison_blanche_data');
+      if (typeof firebase !== 'undefined') {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        db = firebase.database();
+        cloudRef = db.ref('territoire_maison_blanche_data');
+        auth = firebase.auth();
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      }
     } catch(e) {
-      console.warn("Connexion Firebase locale/hors ligne", e);
+      console.warn("Initialisation Firebase :", e);
     }
 
     function esc(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
-        return { '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[c];
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
-    }
-
-    var auth = null;
-    try {
-      auth = firebase.auth();
-      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    } catch(e) {
-      console.warn("Firebase Auth non initialisé", e);
     }
 
     function getProfileEmail(prof) {
@@ -1107,6 +1103,7 @@
       var prof = document.getElementById('userProfileSelect').value;
       var pin = document.getElementById('gatePassInput').value.trim();
       var err = document.getElementById('gateErrorMsg');
+      var btn = document.getElementById('unlockSubmitBtn');
 
       if (prof === 'ecran') {
         err.style.display = 'none';
@@ -1123,29 +1120,36 @@
         return;
       }
 
-      var email = getProfileEmail(prof);
-      var password = pinToPass(prof, pin);
-
       if (!auth) {
-        err.innerText = "Connexion réseau requise pour vérifier le code.";
+        err.innerText = "Module d'authentification non chargé. Vérifiez votre connexion Internet et rechargez.";
         err.style.display = 'block';
         return;
       }
 
+      btn.innerText = "Vérification...";
+      btn.disabled = true;
+
+      var email = getProfileEmail(prof);
+      var password = pinToPass(prof, pin);
+
       auth.signInWithEmailAndPassword(email, password)
         .then(function() {
+          btn.innerText = "Déverrouiller";
+          btn.disabled = false;
           err.style.display = 'none';
           try { localStorage.removeItem('mb_ecran_session'); } catch(e) {}
           document.getElementById('gatePassInput').value = '';
           document.getElementById('lockOverlay').style.display = 'none';
         })
         .catch(function(error) {
+          btn.innerText = "Déverrouiller";
+          btn.disabled = false;
           if (error.code === 'auth/user-not-found') {
-            err.innerText = "Compte non créé dans Firebase (" + email + ").";
+            err.innerText = "Compte inexistant dans Firebase (" + email + ").";
           } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-login-credentials') {
             err.innerText = "Code PIN incorrect pour ce profil.";
           } else {
-            err.innerText = "Erreur de connexion : " + error.message;
+            err.innerText = "Erreur (" + (error.code || 'réseau') + ") : " + error.message;
           }
           err.style.display = 'block';
           document.getElementById('gatePassInput').value = '';
@@ -1546,7 +1550,6 @@
       switchTab('agent', btnEl);
     }
 
-    // Déplacement des blocs autorisé sur tous les modes (y compris l'écran vitrine)
     var draggedElement = null;
 
     function handleDragStart(e) {
@@ -1643,7 +1646,7 @@
     }
 
     function fetchParisWeather() {
-      var url = "https://api.open-meteo.com/v1/forecast?latitude=48.83&longitude=2.36&daily=weathercode,temperature_2m_max,temperature_2m_min¤t_weather=true&timezone=Europe%2FParis";
+      var url = "https://api.open-meteo.com/v1/forecast?latitude=48.83&longitude=2.36&daily=weathercode,temperature_2m_max,temperature_2m_min&current_weather=true&timezone=Europe%2FParis";
       var xhr = new XMLHttpRequest();
       xhr.open("GET", url, true);
       xhr.timeout = 5000;
@@ -1836,577 +1839,4 @@
         } else {
           for (var j = 0; j < evs.length; j++) {
             html += '<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:6px; font-size:0.82rem; gap:8px;">';
-            html += '<span style="cursor:pointer; flex:1;" onclick="editVenueEvent(\'' + esc(v.id) + '\', ' + Number(j) + ')">• ' + esc(evs[j]) + '</span>';
-            html += '<button onclick="deleteVenueEvent(\'' + esc(v.id) + '\', ' + Number(j) + ')" class="del-btn" title="Supprimer">×</button>';
-            html += '</div>';
-          }
-        }
-        html += '</div>';
-        html += '</div></div>';
-      }
-      cont.innerHTML = html;
-    }
-
-    function renderMoodboard() {
-      var cont = document.getElementById('moodboardContainer');
-      if (!cont) return;
-      var html = '';
-      var memos = appData.memos || defaultMemos;
-
-      for (var i = 0; i < memos.length; i++) {
-        var m = memos[i];
-        html += '<div class="memo-card">';
-        html += '<div class="memo-title-box" onclick="editMemoTitle(' + Number(m.id) + ')">';
-        html += '<div class="memo-title ' + esc(m.colorClass || '') + '">' + esc(m.title) + '</div>';
-        html += '<span style="font-size:0.75rem; color:#64748b;">✎ Renommer</span>';
-        html += '</div>';
-
-        html += '<div class="memo-lines">';
-        var lines = m.lines || [];
-        for (var j = 0; j < lines.length; j++) {
-          var ln = lines[j];
-          html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
-          html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" style="cursor:pointer;">';
-          html += '<span class="memo-line-text" onclick="editMemoLineText(' + Number(m.id) + ', ' + Number(j) + ')">' + esc(ln.text) + '</span>';
-          html += '<button onclick="deleteMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" class="del-btn" title="Supprimer">×</button>';
-          html += '</div>';
-        }
-        html += '</div>';
-
-        html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">';
-        html += '<button onclick="addMemoLine(' + Number(m.id) + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
-        html += '<button onclick="deleteMemoCard(' + Number(m.id) + ')" class="del-btn" style="padding:3px 8px; font-size:0.7rem;">Supprimer bloc</button>';
-        html += '</div>';
-
-        html += '</div>';
-      }
-      cont.innerHTML = html;
-    }
-
-    function renderAgentMemos() {
-      var cont = document.getElementById('agentMemosContainer');
-      if (!cont || !activeAgentKey) return;
-      var ag = (appData.agents && appData.agents[activeAgentKey]) || defaultAgents[activeAgentKey];
-      var memos = ag.memos || [];
-      var html = '';
-
-      for (var i = 0; i < memos.length; i++) {
-        var m = memos[i];
-        html += '<div class="memo-card">';
-        html += '<div class="memo-title-box" onclick="editAgentMemoTitle(' + Number(m.id) + ')">';
-        html += '<div class="memo-title ' + esc(m.colorClass || '') + '">' + esc(m.title) + '</div>';
-        html += '<span style="font-size:0.75rem; color:#64748b;">✎ Renommer</span>';
-        html += '</div>';
-
-        html += '<div class="memo-lines">';
-        var lines = m.lines || [];
-        for (var j = 0; j < lines.length; j++) {
-          var ln = lines[j];
-          html += '<div class="memo-line ' + (ln.done ? 'done' : '') + '">';
-          html += '<input type="checkbox" ' + (ln.done ? 'checked' : '') + ' onchange="toggleAgentMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" style="cursor:pointer;">';
-          html += '<span class="memo-line-text" onclick="editAgentMemoLineText(' + Number(m.id) + ', ' + Number(j) + ')">' + esc(ln.text) + '</span>';
-          html += '<button onclick="deleteAgentMemoLine(' + Number(m.id) + ', ' + Number(j) + ')" class="del-btn" title="Supprimer">×</button>';
-          html += '</div>';
-        }
-        html += '</div>';
-
-        html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">';
-        html += '<button onclick="addAgentMemoLine(' + Number(m.id) + ')" style="padding:3px 8px; font-size:0.72rem;">+ Ajouter une ligne</button>';
-        html += '<button onclick="deleteAgentMemoCard(' + Number(m.id) + ')" class="del-btn" style="padding:3px 8px; font-size:0.7rem;">Supprimer bloc</button>';
-        html += '</div>';
-
-        html += '</div>';
-      }
-      cont.innerHTML = html;
-    }
-
-    function editDateEvent(dateKey, label) {
-      if (isReadOnlyScreen) return;
-      document.getElementById('entryType').value = 'calendar_day';
-      document.getElementById('entryKey').value = dateKey;
-      document.getElementById('modalTitle').innerText = "Journée du " + label;
-      document.getElementById('modalInput1').value = (appData.events && appData.events[dateKey]) || '';
-      document.getElementById('modalInput1').placeholder = "Intervention, réunion, événement...";
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function deleteDateEvent(dateKey) {
-      if (isReadOnlyScreen) return;
-      if (appData.events && appData.events[dateKey]) {
-        delete appData.events[dateKey];
-        syncSave();
-      }
-    }
-
-    function openGenericModal(type) {
-      if (isReadOnlyScreen) return;
-      document.getElementById('entryType').value = type;
-      document.getElementById('entryKey').value = '-1';
-      document.getElementById('modalInput1').style.display = 'block';
-      document.getElementById('modalInput2').style.display = 'block';
-
-      if (type === 'pret') {
-        document.getElementById('modalTitle').innerText = "Nouveau prêt";
-        document.getElementById('modalInput1').placeholder = "Matériel (ex: Clé pass, Pompe)";
-        document.getElementById('modalInput2').placeholder = "Destination / Collègue (ex: Taris)";
-      } else if (type === 'rh') {
-        document.getElementById('modalTitle').innerText = "Alerte RH / Congé";
-        document.getElementById('modalInput1').placeholder = "Agent & Motif (ex: Congés Alex)";
-        document.getElementById('modalInput2').placeholder = "Dates (ex: 18/11 au 22/11)";
-      } else if (type === 'commande') {
-        document.getElementById('modalTitle').innerText = "Nouvelle commande";
-        document.getElementById('modalInput1').placeholder = "Désignation (ex: Doseur pH)";
-        document.getElementById('modalInput2').placeholder = "Prix en € (ex: 450, ou laisser vide)";
-      } else if (type === 'tache') {
-        document.getElementById('modalTitle').innerText = "Nouvelle tâche / mission";
-        document.getElementById('modalInput1').placeholder = "Désignation de la tâche...";
-        document.getElementById('modalInput2').style.display = 'none';
-      }
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function openUrgentModal() {
-      if (isReadOnlyScreen) return;
-      document.getElementById('entryType').value = 'urgent';
-      document.getElementById('entryKey').value = '-1';
-      document.getElementById('modalTitle').innerText = "Ajouter un rappel urgent";
-      document.getElementById('modalInput1').placeholder = "Texte du rappel...";
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function editUrgent(idx) {
-      if (isReadOnlyScreen) return;
-      document.getElementById('entryType').value = 'urgent';
-      document.getElementById('entryKey').value = idx;
-      document.getElementById('modalTitle').innerText = "Modifier le rappel";
-      document.getElementById('modalInput1').value = appData.urgents[idx];
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function editPret(id) {
-      if (isReadOnlyScreen) return;
-      var p = appData.prets.find(function(x) { return x.id === id; });
-      document.getElementById('entryType').value = 'pret';
-      document.getElementById('entryKey').value = id;
-      document.getElementById('modalTitle').innerText = "Modifier le prêt";
-      document.getElementById('modalInput1').value = p.text;
-      document.getElementById('modalInput2').value = p.dest;
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function editRH(id) {
-      if (isReadOnlyScreen) return;
-      var r = appData.rh.find(function(x) { return x.id === id; });
-      document.getElementById('entryType').value = 'rh';
-      document.getElementById('entryKey').value = id;
-      document.getElementById('modalTitle').innerText = "Modifier RH";
-      document.getElementById('modalInput1').value = r.text;
-      document.getElementById('modalInput2').value = r.detail;
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function editCommande(id) {
-      if (isReadOnlyScreen) return;
-      var c = appData.commandes.find(function(x) { return x.id === id; });
-      document.getElementById('entryType').value = 'commande';
-      document.getElementById('entryKey').value = id;
-      document.getElementById('modalTitle').innerText = "Modifier la commande";
-      document.getElementById('modalInput1').value = c.item;
-      document.getElementById('modalInput2').value = c.prix || '';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function editTache(id) {
-      if (isReadOnlyScreen) return;
-      var t = appData.taches.find(function(x) { return x.id === id; });
-      document.getElementById('entryType').value = 'tache';
-      document.getElementById('entryKey').value = id;
-      document.getElementById('modalTitle').innerText = "Modifier la tâche";
-      document.getElementById('modalInput1').value = t.text;
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function deleteItem(cat, id) {
-      if (isReadOnlyScreen) return;
-      appData[cat] = appData[cat].filter(function(x) { return x.id !== id; });
-      syncSave();
-    }
-    function deleteUrgent(idx) {
-      if (isReadOnlyScreen) return;
-      appData.urgents.splice(idx, 1);
-      syncSave();
-    }
-
-    function addVenueEvent(venueId) {
-      document.getElementById('entryType').value = 'venue_event';
-      document.getElementById('entryKey').value = venueId;
-      document.getElementById('entrySubKey').value = '-1';
-      document.getElementById('modalTitle').innerText = "Ajouter un événement pour cet équipement";
-      document.getElementById('modalInput1').value = '';
-      document.getElementById('modalInput1').placeholder = "Intervention, travaux, fermeture...";
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function editVenueEvent(venueId, evIdx) {
-      var v = appData.venues.find(function(x) { return x.id === venueId; });
-      document.getElementById('entryType').value = 'venue_event';
-      document.getElementById('entryKey').value = venueId;
-      document.getElementById('entrySubKey').value = evIdx;
-      document.getElementById('modalTitle').innerText = "Modifier l'événement";
-      document.getElementById('modalInput1').value = v.events[evIdx];
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function deleteVenueEvent(venueId, evIdx) {
-      var v = appData.venues.find(function(x) { return x.id === venueId; });
-      if (v) {
-        v.events.splice(evIdx, 1);
-        syncSave();
-      }
-    }
-
-    function addNewMemoCard() {
-      var title = prompt("Titre du nouveau bloc mémo :");
-      if (!title) return;
-      var newCard = { id: Date.now(), title: title, colorClass: "", lines: [] };
-      appData.memos.push(newCard);
-      syncSave();
-    }
-
-    function deleteMemoCard(memoId) {
-      if (confirm("Supprimer ce bloc mémo ?")) {
-        appData.memos = appData.memos.filter(function(m){ return m.id !== memoId; });
-        syncSave();
-      }
-    }
-
-    function editMemoTitle(memoId) {
-      var m = appData.memos.find(function(x){ return x.id === memoId; });
-      var t = prompt("Modifier le titre de l'encadré :", m.title);
-      if (t) {
-        m.title = t;
-        syncSave();
-      }
-    }
-
-    function addMemoLine(memoId) {
-      document.getElementById('entryType').value = 'memo_line';
-      document.getElementById('entryKey').value = memoId;
-      document.getElementById('entrySubKey').value = '-1';
-      document.getElementById('modalTitle').innerText = "Ajouter une ligne au mémo";
-      document.getElementById('modalInput1').value = '';
-      document.getElementById('modalInput1').placeholder = "Chose à faire, note, rappel...";
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function editMemoLineText(memoId, lineIdx) {
-      var m = appData.memos.find(function(x){ return x.id === memoId; });
-      document.getElementById('entryType').value = 'memo_line';
-      document.getElementById('entryKey').value = memoId;
-      document.getElementById('entrySubKey').value = lineIdx;
-      document.getElementById('modalTitle').innerText = "Modifier la ligne";
-      document.getElementById('modalInput1').value = m.lines[lineIdx].text;
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function toggleMemoLine(memoId, lineIdx) {
-      var m = appData.memos.find(function(x){ return x.id === memoId; });
-      if (m && m.lines[lineIdx]) {
-        m.lines[lineIdx].done = !m.lines[lineIdx].done;
-        syncSave();
-      }
-    }
-
-    function deleteMemoLine(memoId, lineIdx) {
-      var m = appData.memos.find(function(x){ return x.id === memoId; });
-      if (m) {
-        m.lines.splice(lineIdx, 1);
-        syncSave();
-      }
-    }
-
-    function addNewAgentMemoCard() {
-      if (!activeAgentKey) return;
-      var title = prompt("Titre du nouveau bloc :");
-      if (!title) return;
-      if (!appData.agents[activeAgentKey].memos) appData.agents[activeAgentKey].memos = [];
-      appData.agents[activeAgentKey].memos.push({ id: Date.now(), title: title, colorClass: "green", lines: [] });
-      syncSave();
-    }
-
-    function deleteAgentMemoCard(memoId) {
-      if (!activeAgentKey) return;
-      if (confirm("Supprimer ce bloc ?")) {
-        appData.agents[activeAgentKey].memos = appData.agents[activeAgentKey].memos.filter(function(m){ return m.id !== memoId; });
-        syncSave();
-      }
-    }
-
-    function editAgentMemoTitle(memoId) {
-      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
-      var t = prompt("Modifier le titre :", m.title);
-      if (t) {
-        m.title = t;
-        syncSave();
-      }
-    }
-
-    function addAgentMemoLine(memoId) {
-      document.getElementById('entryType').value = 'agent_memo_line';
-      document.getElementById('entryKey').value = memoId;
-      document.getElementById('entrySubKey').value = '-1';
-      document.getElementById('modalTitle').innerText = "Ajouter une ligne";
-      document.getElementById('modalInput1').value = '';
-      document.getElementById('modalInput1').placeholder = "Tâche, suivi, note...";
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function editAgentMemoLineText(memoId, lineIdx) {
-      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
-      document.getElementById('entryType').value = 'agent_memo_line';
-      document.getElementById('entryKey').value = memoId;
-      document.getElementById('entrySubKey').value = lineIdx;
-      document.getElementById('modalTitle').innerText = "Modifier la ligne";
-      document.getElementById('modalInput1').value = m.lines[lineIdx].text;
-      document.getElementById('modalInput2').style.display = 'none';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function toggleAgentMemoLine(memoId, lineIdx) {
-      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
-      if (m && m.lines[lineIdx]) {
-        m.lines[lineIdx].done = !m.lines[lineIdx].done;
-        syncSave();
-      }
-    }
-
-    function deleteAgentMemoLine(memoId, lineIdx) {
-      var m = appData.agents[activeAgentKey].memos.find(function(x){ return x.id === memoId; });
-      if (m) {
-        m.lines.splice(lineIdx, 1);
-        syncSave();
-      }
-    }
-
-    function closeModal() {
-      document.getElementById('editModal').classList.remove('active');
-      document.getElementById('modalInput1').value = '';
-      document.getElementById('modalInput2').value = '';
-    }
-
-    function saveModalData() {
-      if (isReadOnlyScreen) return;
-      var type = document.getElementById('entryType').value;
-      var keyOrId = document.getElementById('entryKey').value;
-      var subKey = document.getElementById('entrySubKey').value;
-      var v1 = document.getElementById('modalInput1').value.trim();
-      var v2 = document.getElementById('modalInput2').value.trim();
-
-      if (type === 'calendar_day') {
-        if (!appData.events) appData.events = {};
-        if (v1) appData.events[keyOrId] = v1;
-        else delete appData.events[keyOrId];
-      } else if (type === 'urgent') {
-        if (!v1) return alert("Texte obligatoire");
-        if (keyOrId === '-1') appData.urgents.push(v1);
-        else appData.urgents[parseInt(keyOrId)] = v1;
-      } else if (type === 'pret') {
-        if (!v1) return alert("Texte obligatoire");
-        if (keyOrId === '-1') appData.prets.push({ id: Date.now(), text: v1, dest: v2 || 'Extérieur', type: 'tech' });
-        else {
-          var itemP = appData.prets.find(function(x) { return x.id === parseInt(keyOrId); });
-          itemP.text = v1; itemP.dest = v2;
-        }
-      } else if (type === 'rh') {
-        if (!v1) return alert("Texte obligatoire");
-        if (keyOrId === '-1') appData.rh.push({ id: Date.now(), text: v1, detail: v2 || 'En cours', type: 'rh' });
-        else {
-          var itemR = appData.rh.find(function(x) { return x.id === parseInt(keyOrId); });
-          itemR.text = v1; itemR.detail = v2;
-        }
-      } else if (type === 'commande') {
-        if (!v1) return alert("Texte obligatoire");
-        var prix = parseFloat(v2) || 0;
-        if (keyOrId === '-1') appData.commandes.push({ id: Date.now(), item: v1, prix: prix });
-        else {
-          var itemC = appData.commandes.find(function(x) { return x.id === parseInt(keyOrId); });
-          itemC.item = v1; itemC.prix = prix;
-        }
-      } else if (type === 'tache') {
-        if (!v1) return alert("Texte obligatoire");
-        if (keyOrId === '-1') appData.taches.push({ id: Date.now(), text: v1, done: false });
-        else {
-          var itemT = appData.taches.find(function(x) { return x.id === parseInt(keyOrId); });
-          itemT.text = v1;
-        }
-      } else if (type === 'venue_event') {
-        if (!v1) return alert("Texte obligatoire");
-        var v = appData.venues.find(function(x) { return x.id === keyOrId; });
-        if (v) {
-          if (subKey === '-1') v.events.push(v1);
-          else v.events[parseInt(subKey)] = v1;
-        }
-      } else if (type === 'memo_line') {
-        if (!v1) return alert("Texte obligatoire");
-        var memo = appData.memos.find(function(x) { return x.id === parseInt(keyOrId); });
-        if (memo) {
-          if (subKey === '-1') memo.lines.push({ text: v1, done: false });
-          else memo.lines[parseInt(subKey)].text = v1;
-        }
-      } else if (type === 'agent_memo_line') {
-        if (!v1) return alert("Texte obligatoire");
-        var agMemo = appData.agents[activeAgentKey].memos.find(function(x) { return x.id === parseInt(keyOrId); });
-        if (agMemo) {
-          if (subKey === '-1') agMemo.lines.push({ text: v1, done: false });
-          else agMemo.lines[parseInt(subKey)].text = v1;
-        }
-      }
-
-      syncSave();
-      closeModal();
-    }
-
-    function updateClock() {
-      var now = new Date();
-      document.getElementById('liveClock').innerText = now.toLocaleTimeString('fr-FR');
-      var opt = { weekday: 'short', day: 'numeric', month: 'short' };
-      document.getElementById('liveDate').innerText = now.toLocaleDateString('fr-FR', opt);
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    function applyTheme() {
-      var t = appData.theme || defaultData.theme;
-      var root = document.documentElement;
-      root.style.setProperty('--bg-color', t.bg);
-      root.style.setProperty('--text-color', t.text);
-      root.style.setProperty('--accent-color', t.accent);
-      root.style.setProperty('--highlight-color', t.highlight + '2e');
-      root.style.setProperty('--holiday-color', t.holiday);
-      root.style.setProperty('--font-family', t.font);
-
-      var pBg = document.getElementById('pickerBg');
-      if (pBg) {
-        pBg.value = t.bg;
-        document.getElementById('pickerBgVal').innerText = t.bg;
-        document.getElementById('pickerText').value = t.text;
-        document.getElementById('pickerTextVal').innerText = t.text;
-        document.getElementById('pickerAccent').value = t.accent;
-        document.getElementById('pickerAccentVal').innerText = t.accent;
-        document.getElementById('pickerHighlight').value = t.highlight;
-        document.getElementById('pickerHighlightVal').innerText = t.highlight;
-        document.getElementById('pickerHoliday').value = t.holiday;
-        document.getElementById('pickerHolidayVal').innerText = t.holiday;
-        document.getElementById('fontSelect').value = t.font;
-      }
-    }
-
-    function updateTheme() {
-      appData.theme = {
-        bg: document.getElementById('pickerBg').value,
-        text: document.getElementById('pickerText').value,
-        accent: document.getElementById('pickerAccent').value,
-        highlight: document.getElementById('pickerHighlight').value,
-        holiday: document.getElementById('pickerHoliday').value,
-        font: document.getElementById('fontSelect').value
-      };
-      syncSave();
-    }
-
-    function resetDefaultColors() {
-      appData.theme = defaultData.theme;
-      syncSave();
-    }
-
-    function getFrenchHoliday(date) {
-      var d = date.getDate();
-      var m = date.getMonth() + 1;
-      var y = date.getFullYear();
-
-      if (d === 1 && m === 1) return "Jour de l'An";
-      if (d === 1 && m === 5) return "Fête du Travail";
-      if (d === 8 && m === 5) return "Victoire 1945";
-      if (d === 14 && m === 7) return "Fête Nationale";
-      if (d === 15 && m === 8) return "Assomption";
-      if (d === 1 && m === 11) return "Toussaint";
-      if (d === 11 && m === 11) return "Armistice 1918";
-      if (d === 25 && m === 12) return "Noël";
-
-      var a = y % 19, b = Math.floor(y / 100), c = y % 100;
-      var dd = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
-      var g = Math.floor((b - f + 1) / 3), h = (19 * a + b - dd - g + 15) % 30;
-      var i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
-      var mm = Math.floor((a + 11 * h + 22 * l) / 451);
-      var em = Math.floor((h + l - 7 * mm + 114) / 31);
-      var ed = ((h + l - 7 * mm + 114) % 31) + 1;
-      var easter = new Date(y, em - 1, ed);
-
-      var lPaques = new Date(easter.getTime() + 86400000);
-      var asc = new Date(easter.getTime() + 39 * 86400000);
-      var lPent = new Date(easter.getTime() + 50 * 86400000);
-
-      if (lPaques.getDate() === d && (lPaques.getMonth() + 1) === m) return "Lundi de Pâques";
-      if (asc.getDate() === d && (asc.getMonth() + 1) === m) return "Ascension";
-      if (lPent.getDate() === d && (lPent.getMonth() + 1) === m) return "Lundi de Pentecôte";
-
-      return null;
-    }
-
-    function exportData() {
-      var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
-      var dl = document.createElement('a');
-      dl.setAttribute("href", dataStr);
-      dl.setAttribute("download", "agenda_direction_sync.json");
-      dl.click();
-    }
-
-    function importData(evt) {
-      var file = evt.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          if (!confirm("Remplacer toutes les données partagées par ce fichier ? (Une sauvegarde de sécurité va être téléchargée)")) return;
-          exportData();
-          appData = normalize(JSON.parse(e.target.result));
-          syncSave();
-          alert("Données importées avec succès !");
-        } catch(err) { alert("Fichier JSON invalide"); }
-      };
-      reader.readAsText(file);
-    }
-
-    function forceResetCalendar() {
-      if (prompt("Tape EFFACER pour réinitialiser tout l'agenda (une sauvegarde va être téléchargée)") === "EFFACER") {
-        exportData();
-        try { localStorage.removeItem('mb_live_data_v16'); } catch(e) {}
-        appData = normalize(defaultData);
-        syncSave();
-      }
-    }
-
-    var lastDayKey = formatDateKey(new Date());
-    setInterval(function(){
-      var k = formatDateKey(new Date());
-      if (k !== lastDayKey) {
-        lastDayKey = k;
-        renderAgenda();
-      }
-    }, 60000);
-
-    fetchParisWeather();
-    setInterval(fetchParisWeather, 30 * 60 * 1000);
-    applyTheme();
-    renderAll();
-  </script>
-</body>
-</html>
+            html += '<span style="cursor:pointer; flex:1;" onclick="editVenueEvent(\'' + esc(v.id) + '\
