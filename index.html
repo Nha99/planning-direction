@@ -143,7 +143,7 @@
     .header-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-shrink: 0;
     }
 
@@ -203,6 +203,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 5px;
     }
     button:hover { background: #334155; }
     button.primary { background: #0284c7; border-color: var(--accent-color); }
@@ -630,11 +631,12 @@
       background: none;
     }
 
+    /* Modale générale & Modale CRA */
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.82);
       align-items: center;
       justify-content: center;
       z-index: 10000;
@@ -652,21 +654,73 @@
       flex-direction: column;
       gap: 12px;
     }
-    input[type="text"], input[type="password"], textarea, select {
+    .modal-card.cra-modal {
+      max-width: 680px;
+      max-height: 90vh;
+    }
+    .cra-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .cra-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+    .cra-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: rgba(255,255,255,0.03);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+    }
+    .cra-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .cra-preview {
       width: 100%;
-      padding: 10px;
+      height: 290px;
+      padding: 12px;
+      background: #070a11;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #e2e8f0;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.84rem;
+      line-height: 1.5;
+      resize: vertical;
+    }
+
+    input[type="text"], input[type="password"], input[type="date"], textarea, select {
+      width: 100%;
+      padding: 9px 10px;
       background: #1e293b;
       border: 1px solid rgba(255,255,255,0.15);
       color: white;
       border-radius: 8px;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
     }
 
+    /* Barre basse épurée */
     .admin-bar {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
-      padding: 10px 14px;
+      padding: 8px 14px;
       background: rgba(15, 23, 42, 0.9);
       border-radius: 14px;
       border: 1px solid var(--card-border);
@@ -675,6 +729,7 @@
       gap: 8px;
     }
 
+    /* Mode Affichage Écran Vitrine */
     body.readonly-mode header,
     body.readonly-mode .card {
       backdrop-filter: none !important;
@@ -687,6 +742,7 @@
     body.readonly-mode .nav-tabs .tab-btn:not(#tabBtn-agenda) {
       display: none !important;
     }
+    body.readonly-mode #craHeaderBtn,
     body.readonly-mode button:not(.tab-btn):not(#relockBtn):not(#resetOrderBtn),
     body.readonly-mode .admin-bar button:not(#resetOrderBtn) {
       display: none !important;
@@ -715,8 +771,9 @@
         width: 100%;
         border-top: 1px solid rgba(255,255,255,0.06);
         padding-top: 8px;
+        flex-wrap: wrap;
       }
-      .grid-2col, .territory-grid, .moodboard-grid, .settings-grid {
+      .grid-2col, .territory-grid, .moodboard-grid, .settings-grid, .cra-controls {
         grid-template-columns: 1fr !important;
       }
       .day-row {
@@ -768,6 +825,7 @@
       </div>
     </div>
     <div class="header-right">
+      <button type="button" id="craHeaderBtn" onclick="openCraModal()" class="primary" style="padding: 5px 10px; font-size: 0.75rem;" title="Générer un Compte Rendu d'Activité prêt à copier par mail">📄 CRA</button>
       <div class="weather-widget" id="weatherWidget" title="Météo en direct Paris 13e">
         <div class="weather-day" id="weatherToday">⏳ Météo...</div>
         <div class="weather-separator"></div>
@@ -783,6 +841,7 @@
     </div>
   </header>
 
+  <!-- ================= ONGLET 1 : AGENDA & TABLEAU DE BORD ================= -->
   <div id="tab-agenda" class="tab-content active">
     <div class="dashboard-container" id="dashboardContainer">
       
@@ -805,7 +864,6 @@
             <span class="drag-handle" title="Glisser pour déplacer">⠿</span>
             <div class="card-title" id="title-agenda" onclick="renameCustomBlock('agenda')">📅 Agenda Prévisionnel (35 jours glissants)</div>
           </div>
-          <div style="font-size: 0.75rem; color: #94a3b8;">Cliquer directement sur un jour pour modifier</div>
         </div>
         <div class="card-scroll-body" id="agendaScroll"></div>
       </div>
@@ -872,6 +930,7 @@
     </div>
   </div>
 
+  <!-- ================= ONGLET 2 : TERRITOIRE MAISON BLANCHE ================= -->
   <div id="tab-territoire" class="tab-content">
     <div class="card-header" style="background: var(--card-bg); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--card-border);">
       <div class="card-title" style="font-size: 0.95rem;">📍 Territoire Maison Blanche 75013 • Équipements & Interventions sur site</div>
@@ -880,17 +939,16 @@
     <div class="territory-grid" id="territoryContainer"></div>
   </div>
 
+  <!-- ================= ONGLET 3 : MÉMO ET SUIVI ================= -->
   <div id="tab-moodboard" class="tab-content">
     <div class="card-header" style="background: var(--card-bg); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--card-border);">
-      <div>
-        <div class="card-title" style="font-size: 0.95rem;">📋 Mémo et Suivi Opérationnel</div>
-        <div style="font-size: 0.78rem; color: #94a3b8;">Cliquer directement sur le titre ou les lignes pour modifier</div>
-      </div>
+      <div class="card-title" style="font-size: 0.95rem;">📋 Mémo et Suivi Opérationnel</div>
       <button onclick="addNewMemoCard()" class="primary">+ Ajouter un bloc</button>
     </div>
     <div class="moodboard-grid" id="moodboardContainer"></div>
   </div>
 
+  <!-- ================= ONGLET ESPACE PERSONNEL AGENT ================= -->
   <div id="tab-agent" class="tab-content">
     <div class="agent-header-box">
       <div class="agent-name-title" id="currentAgentTitle">👤 Espace Agent</div>
@@ -901,6 +959,7 @@
     <div class="moodboard-grid" id="agentMemosContainer"></div>
   </div>
 
+  <!-- ================= ONGLET PARAMÈTRES ================= -->
   <div id="tab-parametres" class="tab-content">
     <div class="card">
       <div class="card-header">
@@ -961,19 +1020,15 @@
     </div>
   </div>
 
+  <!-- Barre basse épurée -->
   <div class="admin-bar">
-    <div style="font-size: 0.75rem; color: #94a3b8;">
-      Samsung QM43R • Territoire Maison Blanche 75013 • Firebase Realtime DB
-    </div>
-    <div style="display: flex; gap: 8px;">
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
       <button id="resetOrderBtn" onclick="resetBlockOrder()">↺ Réinitialiser l'ordre des blocs</button>
-      <button onclick="exportData()">💾 Exporter JSON</button>
-      <button onclick="document.getElementById('importFile').click()">📂 Importer JSON</button>
-      <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-      <button onclick="forceResetCalendar()" style="background: #334155; font-size: 0.7rem;">↺ Réinitialiser tout</button>
+      <button onclick="forceResetCalendar()" style="background: #334155; font-size: 0.72rem;">↺ Réinitialiser tout</button>
     </div>
   </div>
 
+  <!-- Modal Édition / Ajout Général -->
   <div class="modal" id="editModal">
     <div class="modal-card">
       <h3 id="modalTitle">Modifier</h3>
@@ -985,6 +1040,45 @@
       <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
         <button onclick="closeModal()">Annuler</button>
         <button onclick="saveModalData()" class="primary">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Générateur de CRA -->
+  <div class="modal" id="craModal">
+    <div class="modal-card cra-modal">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="color: var(--accent-color); font-size: 1.05rem;">📄 Générateur de CRA (Territoire Maison Blanche)</h3>
+        <button onclick="closeCraModal()" class="del-btn" style="font-size:0.9rem;">×</button>
+      </div>
+
+      <div class="cra-controls">
+        <div class="cra-field">
+          <label for="craStartDate">Date de début :</label>
+          <input type="date" id="craStartDate" onchange="buildCraText()">
+        </div>
+        <div class="cra-field">
+          <label for="craEndDate">Date de fin :</label>
+          <input type="date" id="craEndDate" onchange="buildCraText()">
+        </div>
+      </div>
+
+      <div class="cra-options">
+        <label><input type="checkbox" id="craIncUrgents" checked onchange="buildCraText()"> Rappels urgents</label>
+        <label><input type="checkbox" id="craIncPrets" checked onchange="buildCraText()"> Prêts matériel</label>
+        <label><input type="checkbox" id="craIncRh" checked onchange="buildCraText()"> RH & Absences</label>
+        <label><input type="checkbox" id="craIncCommandes" onchange="buildCraText()"> Commandes / Devis</label>
+        <label><input type="checkbox" id="craIncTaches" checked onchange="buildCraText()"> Tâches en cours</label>
+      </div>
+
+      <textarea id="craOutputText" class="cra-preview" readonly></textarea>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span id="craCopyFeedback" style="font-size: 0.78rem; color: #34d399; font-weight: 700;"></span>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="closeCraModal()">Fermer</button>
+          <button onclick="copyCraToClipboard()" class="primary">📋 Copier le CRA pour mail</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1467,7 +1561,7 @@
     var appData = normalize(defaultData);
 
     try {
-      var stored = localStorage.getItem('mb_live_data_v17');
+      var stored = localStorage.getItem('mb_live_data_v18');
       if (stored) appData = normalize(JSON.parse(stored));
     } catch(e) {}
 
@@ -1478,7 +1572,7 @@
         var val = snapshot.val();
         if (val) {
           appData = normalize(val);
-          try { localStorage.setItem('mb_live_data_v17', JSON.stringify(appData)); } catch(e){}
+          try { localStorage.setItem('mb_live_data_v18', JSON.stringify(appData)); } catch(e){}
           applyTheme();
           renderAll();
           document.getElementById('syncBadge').innerText = "● Direct";
@@ -1495,7 +1589,7 @@
 
     function syncSave() {
       if (isReadOnlyScreen) return;
-      try { localStorage.setItem('mb_live_data_v17', JSON.stringify(appData)); } catch(e) {}
+      try { localStorage.setItem('mb_live_data_v18', JSON.stringify(appData)); } catch(e) {}
       if (cloudRef) cloudRef.set(appData);
       applyTheme();
       renderAll();
@@ -1506,6 +1600,187 @@
       return date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate());
     }
     var dayLabels = ["Di", "L", "Ma", "Me", "J", "V", "S"];
+    var fullDayLabels = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+
+    // ================= GÉNÉRATEUR DE CRA =================
+    function openCraModal() {
+      if (isReadOnlyScreen) return;
+      var now = new Date();
+      // Par défaut : du mercredi précédent (ou aujourd'hui si mercredi) au mercredi suivant (+7 jours)
+      var day = now.getDay(); // 0=Di, 3=Me
+      var diffToWed = (day >= 3) ? (day - 3) : (day + 4);
+      var start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToWed);
+      var end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+
+      document.getElementById('craStartDate').value = formatDateKey(start);
+      document.getElementById('craEndDate').value = formatDateKey(end);
+      document.getElementById('craCopyFeedback').innerText = "";
+      buildCraText();
+      document.getElementById('craModal').classList.add('active');
+    }
+
+    function closeCraModal() {
+      document.getElementById('craModal').classList.remove('active');
+    }
+
+    function parseInputDate(val) {
+      if (!val) return null;
+      var p = val.split('-');
+      if (p.length !== 3) return null;
+      return new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+    }
+
+    function formatDisplayFr(date) {
+      return pad2(date.getDate()) + '/' + pad2(date.getMonth() + 1) + '/' + date.getFullYear();
+    }
+
+    function isEventTextInPeriod(text, startDate, endDate) {
+      // Repère les formats JJ/MM dans le texte de l'événement établissement
+      var matches = text.match(/\b([0-3]?[0-9])\/([0-1]?[0-9])\b/g);
+      if (!matches) return false;
+      var startYear = startDate.getFullYear();
+      var endYear = endDate.getFullYear();
+      for (var i = 0; i < matches.length; i++) {
+        var parts = matches[i].split('/');
+        var dd = parseInt(parts[0], 10);
+        var mm = parseInt(parts[1], 10) - 1;
+        var years = (startYear === endYear) ? [startYear] : [startYear, endYear];
+        for (var y = 0; y < years.length; y++) {
+          var cand = new Date(years[y], mm, dd);
+          if (cand >= startDate && cand <= endDate) return true;
+        }
+      }
+      return false;
+    }
+
+    function buildCraText() {
+      var sVal = document.getElementById('craStartDate').value;
+      var eVal = document.getElementById('craEndDate').value;
+      var start = parseInputDate(sVal);
+      var end = parseInputDate(eVal);
+      if (!start || !end) return;
+      if (end < start) {
+        var tmp = start; start = end; end = tmp;
+      }
+
+      var lines = [];
+      lines.push("COMPTE RENDU D'ACTIVITÉ (CRA) — TERRITOIRE MAISON BLANCHE 75013");
+      lines.push("Période : du " + formatDisplayFr(start) + " au " + formatDisplayFr(end));
+      lines.push("================================================================");
+      lines.push("");
+
+      // 1. Rappels urgents
+      if (document.getElementById('craIncUrgents').checked && appData.urgents && appData.urgents.length > 0) {
+        lines.push("1. POINTS DE VIGILANCE & ÉCHÉANCES PRIORITAIRES");
+        for (var u = 0; u < appData.urgents.length; u++) {
+          lines.push("   • " + appData.urgents[u]);
+        }
+        lines.push("");
+      }
+
+      // 2. Agenda & Rendez-vous sur la période choisie
+      lines.push("2. AGENDA, RENDEZ-VOUS & INTERVENTIONS (" + formatDisplayFr(start) + " → " + formatDisplayFr(end) + ")");
+      var cur = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      var eventCount = 0;
+      while (cur <= end) {
+        var key = formatDateKey(cur);
+        var ev = (appData.events && appData.events[key]) ? appData.events[key].trim() : "";
+        var hol = getFrenchHoliday(cur);
+        if (ev || hol) {
+          var label = fullDayLabels[cur.getDay()] + " " + pad2(cur.getDate()) + "/" + pad2(cur.getMonth() + 1);
+          var desc = ev ? ev : (hol + " (Férié)");
+          lines.push("   • " + label + " : " + desc);
+          eventCount++;
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+      if (eventCount === 0) {
+        lines.push("   • Aucun événement enregistré sur cette période.");
+      }
+      lines.push("");
+
+      // 3. Suivi actif par établissement (Onglet Territoire)
+      lines.push("3. SUIVI ACTIF PAR ÉTABLISSEMENT (TERRITOIRE MAISON BLANCHE)");
+      var venues = appData.venues || [];
+      var activeVenueCount = 0;
+      for (var v = 0; v < venues.length; v++) {
+        var venue = venues[v];
+        var vEvents = venue.events || [];
+        if (vEvents.length > 0) {
+          activeVenueCount++;
+          lines.push("   ▸ " + venue.name);
+          for (var ve = 0; ve < vEvents.length; ve++) {
+            var itemTxt = vEvents[ve];
+            var tag = isEventTextInPeriod(itemTxt, start, end) ? " [PÉRIODE]" : "";
+            lines.push("      - " + itemTxt + tag);
+          }
+        }
+      }
+      if (activeVenueCount === 0) {
+        lines.push("   • Aucun événement établissement actif.");
+      }
+      lines.push("");
+
+      // 4. Options complémentaires
+      if (document.getElementById('craIncRh').checked && appData.rh && appData.rh.length > 0) {
+        lines.push("4. SUIVI RH & ABSENCES");
+        for (var r = 0; r < appData.rh.length; r++) {
+          lines.push("   • " + appData.rh[r].text + " : " + appData.rh[r].detail);
+        }
+        lines.push("");
+      }
+
+      if (document.getElementById('craIncPrets').checked && appData.prets && appData.prets.length > 0) {
+        lines.push("5. PRÊTS DE MATÉRIEL EN COURS");
+        for (var p = 0; p < appData.prets.length; p++) {
+          lines.push("   • " + appData.prets[p].text + " → " + appData.prets[p].dest);
+        }
+        lines.push("");
+      }
+
+      if (document.getElementById('craIncCommandes').checked && appData.commandes && appData.commandes.length > 0) {
+        lines.push("6. COMMANDES & DEVIS EN COURS");
+        var totalCmd = 0;
+        for (var c = 0; c < appData.commandes.length; c++) {
+          var cmd = appData.commandes[c];
+          totalCmd += (Number(cmd.prix) || 0);
+          lines.push("   • " + cmd.item + " (" + (cmd.prix ? cmd.prix + " €" : "En devis") + ")");
+        }
+        lines.push("   Total estimé : " + totalCmd.toLocaleString('fr-FR') + " €");
+        lines.push("");
+      }
+
+      if (document.getElementById('craIncTaches').checked && appData.taches && appData.taches.length > 0) {
+        var openTasks = appData.taches.filter(function(t){ return !t.done; });
+        if (openTasks.length > 0) {
+          lines.push("7. TÂCHES & MISSIONS EN COURS");
+          for (var t = 0; t < openTasks.length; t++) {
+            lines.push("   • " + openTasks[t].text);
+          }
+          lines.push("");
+        }
+      }
+
+      document.getElementById('craOutputText').value = lines.join("\n");
+    }
+
+    function copyCraToClipboard() {
+      var ta = document.getElementById('craOutputText');
+      ta.select();
+      ta.setSelectionRange(0, 99999);
+      var fb = document.getElementById('craCopyFeedback');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ta.value).then(function() {
+          fb.innerText = "✓ CRA copié ! Prêt à coller dans votre mail.";
+        }).catch(function() {
+          document.execCommand('copy');
+          fb.innerText = "✓ CRA copié !";
+        });
+      } else {
+        document.execCommand('copy');
+        fb.innerText = "✓ CRA copié !";
+      }
+    }
 
     var activeAgentKey = null;
 
@@ -1571,7 +1846,7 @@
           newOrder.push(container.children[i].id);
         }
         appData.blockOrder = newOrder;
-        try { localStorage.setItem('mb_live_data_v17', JSON.stringify(appData)); } catch(err) {}
+        try { localStorage.setItem('mb_live_data_v18', JSON.stringify(appData)); } catch(err) {}
         if (!isReadOnlyScreen && cloudRef) cloudRef.set(appData);
       }
     }
@@ -1594,7 +1869,7 @@
 
     function resetBlockOrder() {
       appData.blockOrder = ["block-urgents", "block-agenda", "block-prets-rh", "block-bottom-grid"];
-      try { localStorage.setItem('mb_live_data_v17', JSON.stringify(appData)); } catch(e) {}
+      try { localStorage.setItem('mb_live_data_v18', JSON.stringify(appData)); } catch(e) {}
       if (!isReadOnlyScreen && cloudRef) cloudRef.set(appData);
       applyBlockOrder();
     }
@@ -2349,34 +2624,9 @@
       return null;
     }
 
-    function exportData() {
-      var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
-      var dl = document.createElement('a');
-      dl.setAttribute("href", dataStr);
-      dl.setAttribute("download", "agenda_direction_sync.json");
-      dl.click();
-    }
-
-    function importData(evt) {
-      var file = evt.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          if (!confirm("Remplacer toutes les données partagées par ce fichier ? (Une sauvegarde de sécurité va être téléchargée)")) return;
-          exportData();
-          appData = normalize(JSON.parse(e.target.result));
-          syncSave();
-          alert("Données importées avec succès !");
-        } catch(err) { alert("Fichier JSON invalide"); }
-      };
-      reader.readAsText(file);
-    }
-
     function forceResetCalendar() {
-      if (prompt("Tape EFFACER pour réinitialiser tout l'agenda (une sauvegarde va être téléchargée)") === "EFFACER") {
-        exportData();
-        try { localStorage.removeItem('mb_live_data_v17'); } catch(e) {}
+      if (prompt("Tape EFFACER pour réinitialiser tout l'agenda") === "EFFACER") {
+        try { localStorage.removeItem('mb_live_data_v18'); } catch(e) {}
         appData = normalize(defaultData);
         syncSave();
       }
